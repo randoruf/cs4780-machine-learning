@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 1: Supervised Learning</title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<h2>Lecture 1: Supervised Learning</h2>
+
+
+<div style="float: left">
+<a href="lecturenote01_MLsetup.html"></a>
+</div>
+<div style="float: right">
+<a href="lecturenote02_kNN.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+
+
+<h3>Intro</h3>
+The goal in supervised learning is to make 
+<i>predictions from data</i>. For example, one popular application of supervised learning  is email spam filtering. Here, an email (the data instance) needs to be classified as 
+<i>spam</i> or 
+<i>not-spam</i>. Following the approach of traditional computer science, one might be tempted to write a carefully designed program that follows some rules to decide if an email is spam or not. Although such a program might work reasonably well for a while, it has significant draw-backs. As email spam changes it would have to be re-written. Spammers could attempt to reverse engineer the software and design messages that circumvent it. And even if it is successful, it could probably not easily be applied to different languages. 
+
+Machine Learning uses a different approach to generate a program that can make predictions from data. Instead of programming it by hand it is 
+<i>learned</i> from past data. This process works if we have data instances for which we know exactly what the right prediction would have been. For example past data might be user-annotated as spam or not-spam. A machine learning algorithm can utilize such data to learn a program, a 
+<i>classifier</i>, to predict the correct 
+<i>label</i> of each annotated data instance. 
+
+Other successful applications of machine learning include web-search ranking (predict which web-page the user will click on based on his/her search query), placing of online advertisements (predict the expected revenue of an ad, when placed on a homepage, which is seen by a specific user), visual object recognition (predict which object is in an image - 
+<i>e.g.</i> a camera mounted on a self-driving car), face-detection (predict if an image patch contains a human face or not). 
+
+<h3>Setup</h3>
+Let us formalize the supervised machine learning setup. Our training data comes in pairs of inputs $(\mathbf{x},y)$, where $\mathbf{x}\in{\mathcal{R}}^d$ is the input instance and $y$ its label. The entire training data is denoted as
+$$
+D=\left\{(\mathbf{x}_1,y_1),\dots,(\mathbf{x}_n,y_n)\right\}\subseteq {\cal R}^d\times \mathcal{C}\nonumber
+$$
+
+where:
+<table border="0" cellpadding="2"><tr><td colspan="2"></td></tr>
+<tr><td>$\mathcal{R}^d$:</td><td>d-dimensional feature space</td></tr>
+<tr><td>$\mathbf{x}_i$:</td><td>  input vector of the $i^{th}$ sample</td></tr>
+<tr><td>$y_i$:</td><td> label of the $i^{th}$ sample</td></tr>
+<tr><td>$\mathcal{C}$:</td><td> label space</td></tr>
+</table>
+There are multiple scenarios for the label space $\mathcal{C}$:
+<table border="0" cellpadding="2"><tr><td colspan="1"></td></tr>
+<tr><td> Binary classification, i.e., $\mathcal{C}=\{0,1\}$ or $\mathcal{C}=\{-1,+1\}$.</td></tr>
+Example: Spam filtering. An email is either a spam ($+1$), or not ($-1$).
+<tr><td> Multi-class classification, i.e., $\mathcal{C}=\{1,2,\cdots,K\}$ $(K\ge2)$.</td></tr>
+Example: Face classification. A person can be exactly one of $K$ identities (e.g., 1="Barack Obama", 2="George W. Bush", etc.).
+<tr><td> Regression, i.e., $\mathcal{C}=\mathbb{R}$.</td></tr>
+Example: predict future temperature or the height of a person. 
+</table>
+
+The goal of <b> supervised learning</b> is to find a function $h:\mathbb{R}^d\to\mathcal{C}$, such that
+<ol>
+<td> $h(\mathbf{x}_i)\approx y_i$ for all $(\mathbf{x}_i,y_i)\in D$ (training); </td>
+<td> $h(\mathbf{x}_i)\approx y_i$ for all $(\mathbf{x}_i,y_i)\not\in D$ (testing). </td>
+</ol>
+<h3>Examples of feature vectors</h3>
+
+We call $\mathbf{x}_i$ a feature vector and the $d$ dimensions the <u>features</u> describing the $i-$th sample.
+
+<table border="0" cellpadding="2"><tr><td colspan="1"></td></tr>
+<tr><td> <u>Patient Data</u> in a hospital. $\mathbf{x}_i=(x_i^1,x_i^2,\cdots,x_i^d)$, where $x_i^1=0$ or $1$, referring to the patient $i$'s gender, $x_i^2$ is the height of patient $i$ in $cm$, and $x_i^3$ is the age of patient $i$ in years, etc. In this case, $d\le100$ and the feature vector is <u>dense</u>, i.e., the number of nonzero coordinates in $\mathbf{x}_i$ is large relative to $d$.</td></tr>
+
+<tr><td> <u>Text document</u> in bag-of-words format. $\mathbf{x}_i=(x_i^1,x_i^2,\cdots,x_i^d)$, where $x_i^j$ is the occurances of the $j$th word (of, e.g., a dictionary) in document $i$. In this case, $d\sim 100000 -10M$ and the feature vector is <u>sparse</u>, i.e., $\mathbf{x}_i$ consists of mostly zeros.</td></tr>
+
+<tr><td> <u>Image</u>. $\mathbf{x}_i=(x_i^1,x_i^2,\cdots,x_i^{3k})$, where $x_i^{3j-2}$, $x_i^{3j-1}$, and $x_i^{3j}$ refer to the red, green, and blue values of the $j$th pixel in the image. In this case, $d\sim 100000 - 10M$ and the feature vector is <u>dense</u>. A $7\mathrm{MP}$ camera results in $7\mathrm{M}\times 3=21\mathrm{M}$ features.   </td></tr>
+</table>
+
+
+<h3>Hypothesis classes and No Free Lunch</h3>
+
+<p>Before we can find a function $h$, we must specify what type of function it is that we are looking for. It could be an artificial neural network, a decision tree or many other types of classifiers. We call the set of possible functions the <u>hypothesis class</u>. By specifying the hypothesis class, we are encoding important assumptions about the type of problem we are trying to learn. The <u>No Free Lunch Theorem</u> states that every successful ML algorithm must make assumptions. This also means that there is no single ML algorithm that works for every settings. </p>
+
+
+<h3>Loss Functions</h3>
+
+We want to find the <u>best</u> $h(\cdot)$ for a data set $D$. To quantify "best", we introduce the concept of a loss functions (also called risk functions). A loss function measures how wrong your classifier $h$ still is or how many mistakes it still makes. 
+
+Famous examples:
+
+<table border="0" cellpadding="2"><tr><td colspan="1"></td></tr>
+<tr><td> <u>Zero-one loss</u>:
+$$\mathcal{L}_{0/1}(h)=\frac{1}{n}\sum^n_1\delta_{h(\mathbf{x}_i)\ne y_i}, \mbox{ where }\delta_{h(\mathbf{x}_i)\ne y_i}=\begin{cases}
+1,&\mbox{ if $h(\mathbf{x}_i)\ne y_i$}\\
+0,&\mbox{ o.w.}
+\end{cases}
+$$
+This loss function returns the <u>error rate</u> on this data set $D$. For every example that the classifier misclassifies (i.e. gets wrong) a loss of 1 is suffered, whereas correctly classified samples lead to 0 loss. </td></tr>
+
+<tr><td> <u>Squared loss</u>:
+$$\mathcal{L}_{sq}(h)=\frac{1}{n}\sum^n_{i=1}(h(\mathbf{x}_i)-y_i)^2.$$
+The squared loss function is typically used in regression, and it gives magnified penalties if $|h(\mathbf{x}_i)-y_i|$ is large.</td></tr>
+
+<tr><td> <u>Absolute loss</u>:
+$$\mathcal{L}_{abs}(h)=\frac{1}{n}\sum^n_{i=1}|h(\mathbf{x}_i)-y_i|.$$
+The absolute loss function is typically used in regression, and it gives non-magnified penalties if $|h(\mathbf{x}_i)-y_i|$ is large. Thus, absolute loss is suitable for noisy data.</td></tr>
+</table>
+
+
+
+<h3>Generalization:</h3>
+
+<p>Given a loss function, we can then attempt to find the function $h$ that minimizes the loss: 
+$$
+h=\textrm{argmin}_{h\in{\mathcal{H}}}\mathcal{L}(h)
+$$
+A big part of machine learning focuses on the question, how to do this minimization efficiently. 
+</p>
+
+<p>If you find a function $h(\cdot)$ with low loss on your data $D$, how do you know whether it will still get examples right that are not in $D$? </p>
+
+<p><u>Bad example</u>: "memorizer" $h(\cdot)$
+$$h(x)=\begin{cases}
+y_i,&\mbox{ if $\exists (\mathbf{x}_i,y_i)\in D$, s.t., $\mathbf{x}=\mathbf{x}_i$},\\
+0,&\mbox{ o.w.}
+\end{cases}$$
+For this $h(\cdot)$, we get $0\%$ error on the training data $D$, but does horribly with samples not in $D$, i.e., there's the overfitting issue with this function.
+
+
+<h3>Train / Test splits</h3>
+To resolve the overfitting issue, we usual <u>split</u> $D$ in to three subsets: $D_\mathrm{TR}$ as the training data, $D_\mathrm{VA}$, as the validation data, and $D_\mathrm{TE}$, as the test data. Usually, they are split into a proportion of $80\%$, $10\%$, and $10\%$. Then, we choose $h(\cdot)$ based on $D_\mathrm{TR}$, and evaluate $h(\cdot)$ on $D_\mathrm{TE}$.</p>
+
+<br>
+<br>
+<u>Quiz</u>: Why do we need $D_\mathrm{VA}$?
+<br>
+
+$D_\mathrm{VA}$ is used to check whether the $h(\cdot)$ obtained from $D_\mathrm{TR}$ suffers from the overfitting issue. $h(\cdot)$ will need to be validated on $D_\mathrm{VA}$, if the loss is too large, $h(\cdot)$ will get revised based on $D_\mathrm{TR}$, and validated again on $D_\mathrm{VA}$. This process will keep going back and forth until it gives low loss on $D_\mathrm{VA}$. Here's a trade-off between the sizes of $D_\mathrm{TR}$ and $D_\mathrm{VA}$: the training results will be better for a larger $D_\mathrm{TR}$, but the validation will be more efficient if $D_\mathrm{VA}$ is larger.  
+
+<h4>How to Split the Data?</h4>
+
+<table border="0" cellpadding="2"><tr><td colspan="1"></td></tr>
+<tr><td> <u>By time</u>, if the data is temporally collected. <br>
+In generally, if the data has a temporal component, we <u>must</u> split it by time.</td></tr>
+<tr><td> <u>Uniformly at random</u>, if (and, in general, only if) the data is $i.i.d.$.</td></tr>
+
+</table>
+As a general rule-of-thumb, $D_\mathrm{TE}$ and $D_\mathrm{TR}$ should be somehow independent.
+
+The test error (or test loss) approximates the true generalization error/loss. Putting everything together:
+$$\mbox{Learning: }h^*(\cdot)=\textrm{argmin}_{h(\cdot)\in\mathcal{H}}\frac{1}{|D_\mathrm{TR}|}\sum_{(\mathbf{x},y)\in D_\mathrm{TR}}\ell(\mathbf{x},y|h(\cdot)),$$ 
+
+where $\mathcal{H}$ is the hypothetical class (i.e., the set of all possible classifiers $h(\cdot)$). It's clear that $h^*(\cdot)$ is the classifier that minimizes the training loss.
+
+$$\mbox{Evaluation: }\epsilon_\mathrm{TE}=\frac{1}{|D_{TE}|}\sum_{(\mathbf{x},y)\in D_\mathrm{TE}} \ell (\mathbf{x},y|h^*(\cdot)),$$
+i.e., $\epsilon_\mathrm{TE}$ is the testing loss.
+
+$$\mbox{Generalization: }\epsilon=\mathbb{E}_{(\mathbf{x},y)\sim \mathcal{P}}[\ell(\mathbf{x},y|h^*(\cdot))],$$
+where $\mathcal{P}$ is the "true" distribution that the data $D_\mathrm{TE}$ follows. Thus, $\epsilon$ is the (unattainable) generalization loss. 
+<p>
+<u>Quiz</u>: Why does $\epsilon_\mathrm{TE}\to\epsilon$ as $|D_\mathrm{TE}|\to +\infty$?
+
+This is due to the weak law of large numbers. Thus, the testing data set $D_\mathrm{TE}$ should consist of $i.i.d.$ data points.
+</p>
+<p>
+<u>No free lunch</u>. Every ML algorithm has to make assumptions on which hypothesis class $\mathcal{H}$ should you choose? This choice depends on the data, and encodes <u>your assumptions</u> about the data set/distribution $\mathcal{P}$. Clearly, there's no one perfect $\mathcal{H}$ for all problems. 
+</p>
+<u>Example</u>. Assume that $(\mathbf{x}_1,y_1)=(1,1)$, $(\mathbf{x}_2,y_2)=(2,2)$, $(\mathbf{x}_3,y_3)=(3,3)$, $(\mathbf{x}_4,y_4)=(4,4)$, and $(\mathbf{x}_5,y_5)=(5,5)$. 
+<p>Question: what is the value of $y$ if $\mathbf{x}=2.5$? It is <u>impossible</u> to know the answer without assumptions.</p>
+	
+</body>
+</html>

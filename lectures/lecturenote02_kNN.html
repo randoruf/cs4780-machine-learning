@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+
+
+
+<title>Lecture 2: k-nearest neighbors</title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>Lecture 2: k-nearest neighbors</h2>
+
+<div style="float: left">
+<a href="lecturenote01_MLsetup.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote03.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+
+
+
+<h3>The k-NN algorithm</h3>
+<u>Assumption:</u>
+Similar Inputs have similar outputs
+</br>
+<u>Classification rule:</u>
+For a test input $x$, assign the most common label amongst its k most similar training inputs
+<blockquote>
+    <center>
+    <img src="images/c2/note2_1.png" width="400px" />
+    </center>
+      <p><cite><center>Neighbors' labels are $2\times$<font size=4><b>&oplus;</b></font> and $1\times$<b><font size=4>&#8854;</font></b> and the result is <font size=4><b>&oplus;</b></font>.
+      </center></cite></p>
+</blockquote>
+
+</br>
+<u>Formal (and borderline incomprehensible) definition of k-NN:</u> 
+<li> Test point: $\mathbf{x}$ </li>
+<li> 
+Define the set of the $k$ nearest neighbors of $\mathbf{x}$ as $S_\mathbf{x}$. Formally $S_\mathbf{x}$ is defined as $S_\mathbf{x}\subseteq {D}$ s.t. $|S_\mathbf{x}|=k$ and $\forall(\mathbf{x}',y')\in D\backslash S_\mathbf{x}$,
+            \[\text{dist}(\mathbf{x},\mathbf{x}')\ge\max_{(\mathbf{x}'',y'')\in S_\mathbf{x}} \text{dist}(\mathbf{x},\mathbf{x}''),\]
+        (i.e. every point in $D$ but <i>not</i> in $S_\mathbf{x}$ is at least as far away from $\mathbf{x}$ as the furthest point in $S_\mathbf{x}$). 
+        We can then define the classifier $h()$ as a function returning the most common label in $S_\mathbf{x}$:
+            \[h(\mathbf{x})=\text{mode}(\{y'':(\mathbf{x}'',y'')\in S_\mathbf{x}\}),\]
+        where $\text{mode}(\cdot)$ means to select the label of the highest occurrence.
+</li>
+
+(Hint: In case of a draw, a good solution is to return the result of $k$-NN with smaller $k$)
+
+<h3>What distance function should we use?</h3>
+
+The k-nearest neighbor classifier fundamentally relies on a distance metric. The better that metric reflects label similarity, the better the classified will be. The most common choice is the <b>Minkowski distance</b>
+\[\text{dist}(\mathbf{x},\mathbf{z})=\left(\sum_{r=1}^d |x_r-z_r|^p\right)^{1/p}.\]
+
+<br>
+<b> Quiz#1: </b> This distance definition is pretty general and contains many well-known distances as special cases:
+<!--<li>$p = 1$: </li>
+<li>$p = 2$: </li>
+<li>$p \to \infty$: </li>
+-->
+
+<li>$p = 1$: Manhattan Distance ($l_1$-norm)</li>
+<li>$p = 2$: Euclidean Distance ($l_2$-norm)</li>
+<li>$p \to \infty$: Maximum Norm</li>
+<li>$p \to 0$: (not well defined)</li>
+</br>
+
+<b>Quiz#2:</b> How does $k$ affect the classifier? What happens if $k=n$? What if $k =1$?
+<li> $k = n$ <!--=> return the mode of the data set</li>-->
+<li> $k = 1$ <!--=> very sensitive to distance</li>-->
+<br>
+
+<h3>Brief digression (Bayes optimal classifier)</h3> 
+What is the Bayes optimal classifier?
+
+Assume you knew $\mathrm{P}(y|\mathbf{x})$. What would you predict? 
+</br>
+<u>Examples:</u> $y\in\{0,1\}$ 
+\[
+        \mathrm{P}(+1| x)=0.8\\
+        \mathrm{P}(-1| x)=0.2\\       
+
+\text{Best prediction: }y^* = h_\mathrm{opt} = argmax_y P(y|\mathbf{x})\]
+(You predict the most likely class.)
+
+What is the error of the BayesOpt classifier?		
+
+$$\epsilon_{BayesOpt}=1-\mathrm{P}(h_\mathrm{opt}(\mathbf{x})|y) = 1- \mathrm{P}(y^*|\mathbf{x})$$ 
+
+(In our example, that is $\epsilon_{BayesOpt}=0.2$.)
+
+You can never do better than the Bayes Optimal Classifier.
+</br>
+<h3>1-NN Convergence Proof</h3>
+
+<b>Cover and Hart 1967<a href="lecturenote02_kNN.html#ref1"><sup>[1]</sup></a>: As $n \to \infty$, the $1$-NN error is no more than twice the error of the Bayes Optimal classifier.</b>
+(Similar guarantees hold for $k>1$.)
+
+<table border="0" align="center" cellpadding="0" cellspacing="0"> 
+<tr>
+<td>
+	<p><cite><center>$n$ small
+      </center></cite>
+    <center>
+    <img src="images/c2/note2_2_1.png" width="200px" />
+    </center></p>
+</td>
+<td>
+    <p><cite><center>$n$ large
+      </center></cite>
+    <center>
+    <img src="images/c2/note2_2_2.png" width="200px" />
+    </center></p>
+</td>
+<td>
+	<p><cite><center>$n\to\infty$
+      </center></cite>
+    <center>
+    <img src="images/c2/note2_2_3.png" width="200px" />
+    </center>	</p>
+</td>
+</tr>
+</table>
+</blockquote>
+
+
+
+Let $\mathbf{x}_\mathrm{NN}$ be the nearest neighbor of our test point $\mathbf{x}_\mathrm{t}$. As $n \to \infty$, $\text{dist}(\mathbf{x}_\mathrm{NN},\mathbf{x}) \to 0$,
+i.e. $\mathbf{x}_\mathrm{NN} \to \mathbf{x}_{t}$.
+(This means the nearest neighbor is identical to $\mathbf{x}_\mathrm{t}$.)
+
+You return the label of $\mathbf{x}_\mathrm{NN}$.
+What is the probability that this is not the label of $\mathbf{x}$?
+(This is the probability of drawing two different label of $\mathbf{x}$)
+\begin{multline*}
+        \epsilon_{NN}=\mathrm{P}(y^* | \mathbf{x}_{t})(1-\mathrm{P}(y^* | \mathbf{x}_{NN})) + \mathrm{P}(y^* | \mathbf{x}_{NN})(1-\mathrm{P}(y^* | \mathbf{x}_{t}))\\
+ \le (1-\mathrm{P}(y^* | \mathbf{x}_{NN})+(1-\mathrm{P}(y^* | \mathbf{x}_{t})
+ = 2(1-\mathrm{P}(y^* | \mathbf{x}_{t}) = 2\epsilon_\mathrm{BayesOpt},
+ \end{multline*}
+where the inequality follows from $\mathrm{P}(y^* | \mathbf{x}_{+})\le 1$ and $\mathrm{P}(y^* | \mathbf{x}_{NN})\le 1$.
+
+<blockquote>
+    <center>
+    <img src="images/c2/spamtree.png" width="400px"/>
+    </center>
+    In the limit case, the test point and its nearest neighbor are identical. 
+There are exactly two cases when a misclassification can occur: 
+when the test point and its nearest neighbor have different labels. 
+The probability of this happening is the probability of the two red events:
+$(1\!-\!p(s|\mathbf{x}))p(s|\mathbf{x})+p(s|\mathbf{x})(1\!-\!p(s|\mathbf{x}))=2p(s|\mathbf{x})(1-p(s|\mathbf{x}))$
+</blockquote>
+
+</br><u>Good news:</u> 
+As $n \to\infty$, the $1$-NN classifier is only a factor 2 worse than the best possible classifier.
+
+</br><u>Bad news:</u> We are cursed!!
+
+<h3>Curse of Dimensionality</h3>
+
+Imagine $X=[0,1]^d$, and $k = 10$ and all training data is sampled <i>uniformly</i>
+with $X$, i.e. $\forall i, x_i\in[0,1]^d$
+<blockquote>
+    <center>
+    <img src="images/c2/note2_3.png" width="400px" />
+    </center>
+</blockquote>
+
+Let $\ell$ be the edge length of the smallest hyper-cube that contains all $k$-nearest neighbor of a test point.
+Then $\ell^d\approx\frac{k}{n}$ and $\ell\approx\left(\frac{k}{n}\right)^{1/d}$.
+
+If $n= 1000$, how big is $\ell$?
+<table border="0" cellpadding="2" align="center">
+<tr><td colspan="2" align="center">$d$</td><td colspan="2" align="center">$\ell$ </td></tr>
+<tr><td colspan="2" align="center">2</td><td colspan="2" align="center">0.1 </td></tr> 
+<tr><td colspan="2" align="center">10</td><td colspan="2" align="center">0.63 </td></tr> 
+<tr><td colspan="2" align="center">100</td><td colspan="2" align="center">0.955 </td></tr> 
+<tr><td colspan="2" align="center">1000</td><td colspan="2" align="center">0.9954 </td></tr> 
+</table>
+
+Almost the entire space is needed to find the $10$-NN.
+<blockquote>
+    <center>
+    <img src="images/c2/cursefigure.png" width="700px" />
+    </center>
+      <p><cite><center>Figure demonstrating ``the curse of dimensionality''. The histogram plots show the distributions of all pairwise distances 
+    between randomly distributed points within $d$-dimensional unit squares.  As the number of dimensions $d$ grows, all distances concentrate within a very small range.
+      </center></cite></p>
+</blockquote>
+
+Imagine we want $\ell$ to be small (i.e the nearest neighbor are <i>truly</i> near by), then how many data point do we need?
+
+Fix $\ell=\frac{1}{10}=0.1$ $\Rightarrow$ $n=\frac{k}{\ell^d}=k\cdot 10^d$,
+which grows exponentially!
+
+</br><u>Rescue to the curse:</u> Data may lie in low dimensional subspace or on sub-manifolds. Example: natural images (digits, faces).
+
+<h3>k-NN summary</h3>
+
+<li> $k$-NN is a simple and effective classifier if distances reliably reflect a semantically meaningful notion of the dissimilarity. (It becomes truly competitive through metric learning)</li>
+<li> As $n \to \infty$, $k$-NN becomes provably very accurate, but also very slow.</li>
+<li> As $d \to \infty$, the curse of dimensionality becomes a concern.</li>
+
+
+</br>
+<h3>Reference</h3>
+<div id="ref1">[1]Cover, Thomas, and, Hart, Peter. Nearest neighbor pattern classification[J]. Information Theory, IEEE Transactions on, 1967, 13(1): 21-27
+</div>
+</body>
+</html>

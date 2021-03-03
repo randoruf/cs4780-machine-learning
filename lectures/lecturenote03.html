@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 3: The Perceptron</title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>Lecture 3: The Perceptron</h2>
+
+<div style="float: left">
+<a href="lecturenote02_kNN.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote04.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+
+
+<h3>Assumptions</h3>
+<ol>
+    <li>Binary classification (i.e. $y_i \in \{-1, +1\}$)</li>
+    <li>Data is linearly separable</li>
+</ol>
+<h3>Classifier</h3>
+$$
+h(x_i) = \textrm{sign}(\vec{w} \cdot \vec{x_i} + b)
+$$
+<center>
+<img src="images/perceptron/perceptron_img1.png" width="750px" />
+</center>
+$b$ is the bias term (without the bias term, the hyperplane that $\vec{w}$ defines would always have to go through the origin).
+Dealing with $b$ can be a pain, so we 'absorb' it into the feature vector $\vec{w}$ by adding one additional <i>constant</i> dimension.
+Under this convention,
+$$
+\vec{x_i} \hspace{0.1in} \text{becomes} \hspace{0.1in} \begin{bmatrix} \vec{x_i} \\ 1  \end{bmatrix} \\
+\vec{w} \hspace{0.1in} \text{becomes} \hspace{0.1in} \begin{bmatrix} \vec{w} \\ b  \end{bmatrix} \\
+$$
+We can verify that
+$$
+\begin{bmatrix} \vec{x_i} \\ 1  \end{bmatrix} \cdot \begin{bmatrix} \vec{w} \\ b  \end{bmatrix} = \vec{w} \cdot \vec{x_i} + b
+$$
+Using this, we can simplify the above formulation of $h(x_i)$ to 
+$$
+h(x_i) = \textrm{sign}(\vec{w} \cdot \vec{x})
+$$
+
+<u>Observation:</u> Note that
+$$
+y_i(\vec{w} \cdot \vec{x_i}) > 0 \Longleftrightarrow x_i \hspace{0.1in} \text{is classified correctly}
+$$
+where 'classified correctly' means that $x_i$ is on the correct side of the hyperplane defined by $\vec{w}$.
+Also, note that the left side depends on $y_i \in \{-1, +1\}$ (it wouldn't work if, for example $y_i \in \{0, +1\}$).
+
+<h3>Perceptron Algorithm</h3>
+Now that we know what the $\vec{w}$ is supposed to do (defining a hyperplane the separates the data), let's look at how we can get such $\vec{w}$.
+</br> </br>
+<b>Perceptron Algorithm</b>
+<center>
+<img src="images/perceptron/perceptron_algo.png" width="750px" />
+</center>
+</br> </br>
+
+<h4>Geometric Intuition</h4>
+<!--
+</br> </br>
+Below we can see that the point $\vec{x_i}$ is initially misclassified (left) by the hyperplane defined by $\vec{w_t}$ at time $t$.
+The middle portion shows how the perceptron update changes $\vec{w_t}$ to $\vec{w_{t+1}}$.
+Right shows that the point is no longer misclassified after the update.
+</br> </br>
+<center>
+<img src="images/perceptron/perceptron_img2.png" width="800px" />
+</center>
+--> 
+<br>
+Quiz#1: Can you draw a visualization of a Perceptron update?<br>
+Quiz#2: How often can a Perceptron misclassify a point $\vec{x}$ repeatedly?<br>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+<h3>Perceptron Convergence</h3>
+Suppose that $\exists \vec{w}^*$ such that $y_i(\vec{w}^* \cdot \vec{x}) > 0 $ $\forall (\vec{x}_i, y_i) \in D$.
+</br> </br>
+Now, suppose that we rescale each data point and the $\vec{w}^*$ such that
+$$
+||\vec{w}^*|| = 1 \hspace{0.3in} \text{and} \hspace{0.3in} ||\vec{x_i}|| \le 1 \hspace{0.1in} \forall \vec{x_i} \in D
+$$
+The <u>Margin of a hyperplane</u>, $\gamma$, is defined as
+$$
+\gamma = \min_{(\vec{x_i}, y_i) \in D}|\vec{w}^* \cdot \vec{x_i} |
+$$
+We can visualize this as follows
+<center>
+<img src="images/perceptron/perceptron_img3.png" width="400px" />
+</center>
+<ul>
+    <li>All inputs $\vec{x_i}$ live within the unit sphere</li>
+    <li>$\gamma$ is the distance from the hyperplane (blue) to the closest data point</li>
+    <li>$\vec{w}^*$ lies on the unit sphere</li>
+</ul>
+</br> </br>
+<b>Theorem:</b> If all of the above holds, then the perceptron algorithm makes at most $1 / \gamma^2$ mistakes.
+</br> </br>
+<b>Proof:</b><br>
+Keeping what we defined above, consider the effect of an update ($\vec{w}$ becomes $\vec{w}+y\vec{x}$)  on the two terms $\vec{w} \cdot \vec{w}^*$ and $\vec{w} \cdot \vec{w}$. 
+
+We will use two facts:
+<ul>
+ <li> $y( \vec{x}\cdot \vec{w})\leq 0$: This holds because $\vec x$ is misclassified by $\vec{w}$ - otherwise we wouldn't make the update.</li>
+ <li> $y( \vec{x}\cdot \vec{w}^*)>0$: This holds because $\vec{w}^*$ is a separating hyper-plane and classifies all points correctly. </li>
+<ol>
+    <li>
+Consider the effect of an update on $\vec{w} \cdot \vec{w}^*$:
+$$
+(\vec{w} + y\vec{x}) \cdot \vec{w}^* = \vec{w} \cdot \vec{w}^* + y(\vec{x}\cdot \vec{w}^*) \ge \vec{w} \cdot \vec{w}^* + \gamma
+$$
+  The inequality follows from the fact that, for $\vec{w}^*$, the distance from the hyperplane defined by $\vec{w}^*$ to $\vec{x}$ must be at least $\gamma$ (i.e. $y (\vec{x}\cdot \vec{w}^*)=|\vec{x}\cdot\vec{w}^*|\geq \gamma$).
+</br> </br>
+<u>This means that for each update,</u> $\vec{w} \cdot \vec{w}^*$ <u>grows by <b>at least</b> $\gamma$</u>.
+    </li>
+    <li>
+Consider the effect of an update on $\vec{w} \cdot \vec{w}$:
+$$
+(\vec{w} + y\vec{x})\cdot  (\vec{w} + y\vec{x}) = \vec{w} \cdot \vec{w} + 2y(\vec{w} \cdot\vec{x}) + y^2(\vec{x}\cdot \vec{x}) \le \vec{w} \cdot \vec{w} + 1
+$$
+The inequality follows from the fact that
+        <ul>
+            <li>$2y(\vec{w}\cdot \vec{x}) < 0$ as we had to make an update, meaning $\vec{x}$ was misclassified </li>
+            <li>$y^2(\vec{x} \cdot  \vec{x}) \le 1$ as $y^2 = 1$ and all $\vec{x}\cdot \vec{x}\leq 1$ (because $\|\vec x\|\leq 1$).</li>
+        </ul>
+    </li>
+<u>This means that for each update,</u> $\vec{w} \cdot \vec{w}$ <u>grows by <b>at most</b> 1</u>.
+    <li>
+        Now we can put together the above findings. Suppose we had $M$ updates.
+\begin{align}
+M\gamma &\le \vec{w}\cdot\vec{w}^* &&\text{By (1)} \\
+&= |\vec{w}\cdot\vec{w}^*| &&\text{By (1) again (the dot-product must be non-negative because the initialization is 0 and each update increases it by at least $\gamma$)} \\
+&\le ||\vec{w}||\  ||\vec{w}^*|| &&\text{By Cauchy-Schwartz inequality} \\
+&= ||\vec{w}|| &&\text{As $||\vec{w}^*|| = 1$} \\
+&= \sqrt{\vec{w} \cdot \vec{w}} && \text{by definition of $\|\vec{w}\|$} \\
+&\le \sqrt{M} &&\text{By (2)} \\ 
+&\Rightarrow M\gamma \le \sqrt{M} \\
+&\Rightarrow M^2\gamma^2 \le M \\
+&\Rightarrow M \le \frac{1}{\gamma^2}
+\end{align} 
+    </li>
+</ol>
+<h3>History</h3>
+<ul>
+    <li>Initially, huge wave of excitement ("Digital brains") </li>
+    <li>Then, contributed to the A.I. Winter. Famous counter-example XOR problem (Minsky 1969): </li>
+        <center>
+        <img src="images/perceptron/perceptron_img4.png" width="300px" />
+        </center>
+    <li>If data is not linearly separable, it loops forver. </li>
+</ul>
+
+</body>
+</html>

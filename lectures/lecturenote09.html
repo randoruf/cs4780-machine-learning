@@ -1,0 +1,191 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 9: SVM </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2> Lecture 9: SVM </h2>
+<div style="float: left">
+<a href="lecturenote08.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote10.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+
+</br>
+The Support Vector Machine (SVM) is a linear classifier that can be viewed as an extension of the <a href="lecturenote03.html">Perceptron</a> developed by Rosenblatt in 1958. The Perceptron guaranteed that you find <b>a</b> hyperplane if it exists. The SVM finds the <b>maximum margin</b> separating hyperplane. 
+</br> </br>
+
+We define a linear classifier: $h(\mathbf{x})=sign(\mathbf{w}^{T}\mathbf{x}+b)$ and we assume that our labels are within $\{+1,-1\}$.
+</br> </br>
+
+<blockquote>
+    <center>
+
+
+<img src="images/svm/margin.png" width="400px"  />
+
+	<p>Figure 1: (Left:) Two different separating hyperplanes for the same data set. (Right:) The maximum margin hyperplane. The margin, $\gamma$, is the distance from the hyperplane (solid line) to the closest points in either class (which touch the parallel dotted lines).</p>
+    </center>
+</blockquote>
+</br>
+
+
+Typically, if a data set is linearly separable, there are infinitely many separating hyperplanes. A natural question to ask is:
+</br> </br>
+<b><u>Question</u>: What is the best separating hyperplane?</b>
+</br> </br>
+
+<b><u>SVM Answer</u>: The one that maximizes the distance to the closest data points from both classes. We say it is the hyperplane with <u>maximum margin</u>. </b>
+</br> </br>
+
+<h4>Margin</h4>
+
+<p>We already saw the definition of a <i>margin</i> in the context of the <a href="lecturenote03.html">Perceptron</a>. 
+A hyperplane is defined through $\mathbf{w},b$ as a set of points such that $\mathcal{H}=\left\{\mathbf{x}\vert{}\mathbf{w}^T\mathbf{x}+b=0\right\}$.
+Let the margin $\gamma$ be defined as the distance from the hyperplane to the closest point across both classes. </p>
+
+
+<img src="images/svm/projection.png" width="200px" align="right" />
+</br>
+<p><b>What is the distance of a point $\mathbf{x}$ to the hyperplane $\mathcal{H}$?</b><br> Consider some point $\mathbf{x}$. Let $\mathbf{d}$ be the vector from $\mathcal{H}$ to $\mathbf{x}$ of minimum length. Let $\mathbf{x}^P$ be the projection of $\mathbf{x}$ onto $\mathcal{H}$. It follows then that:
+</br> 
+&nbsp &nbsp &nbsp &nbsp $\mathbf{x}^P=\mathbf{x}-\mathbf{d}$.
+</br> 
+&nbsp &nbsp &nbsp &nbsp $\mathbf{d}$ is parallel to $\mathbf{w}$, so $\mathbf{d}=\alpha\mathbf{w}$ for some $\alpha\in\mathbb{R}$.
+</br> 
+&nbsp &nbsp &nbsp &nbsp $\mathbf{x}^P\in\mathcal{H}$ which implies $\mathbf{w}^T\mathbf{x}^P+b=0$
+</br> 
+&nbsp &nbsp &nbsp &nbsp therefore $\mathbf{w}^T\mathbf{x}^P+b=\mathbf{w}^T(\mathbf{x}-\mathbf{d})+b=\mathbf{w}^T(\mathbf{x}-\alpha\mathbf{w})+b=0$
+</br> 
+&nbsp &nbsp &nbsp &nbsp which implies $\alpha=\frac{\mathbf{w}^T\mathbf{x}+b}{\mathbf{w}^T\mathbf{w}}$
+</br> 
+The length of $\mathbf{d}$:
+</br> 
+&nbsp &nbsp &nbsp &nbsp $\left \| \mathbf{d} \right \|_2=\sqrt{\mathbf{d}^T\mathbf{d}}=\sqrt{\alpha^2\mathbf{w}^T\mathbf{w}}=\frac{\left | \mathbf{w}^T\mathbf{x}+b \right |}{\sqrt{\mathbf{w}^T\mathbf{w}}}=\frac{\left | \mathbf{w}^T\mathbf{x}+b \right |}{\left \| \mathbf{w} \right \|_{2}}$
+</br> 
+Margin of $\mathcal{H}$ with respect to $D$:
+$\gamma(\mathbf{w},b)=\min_{\mathbf{x}\in D}\frac{\left | \mathbf{w}^T\mathbf{x}+b \right |}{\left \| \mathbf{w} \right \|_{2}}$
+</br> 
+
+
+<p>
+By definition, the margin and hyperplane are scale invariant: $\gamma(\beta\mathbf{w},\beta b)=\gamma(\mathbf{w},b), \forall \beta \neq 0$ </p>
+
+
+<p>Note that if the hyperplane is such that $\gamma$ is maximized, it must lie right in the middle of the two classes. In other words, $\gamma$ must be the distance to the closest point within <u>both</u> classes. (If not, you could move the hyperplane towards data points of the class that is further away and increase $\gamma$, which contradicts that $\gamma$ is maximized.)</p>
+
+<h3> Max Margin Classifier</h3>
+
+We can formulate our search for the maximum margin separating hyperplane as a constrained optimization problem. The objective is to maximize the margin under the constraints that all data points must lie on the correct side of the hyperplane: 
+$$
+\underbrace{\max_{\mathbf{w},b}\gamma(\mathbf{w},b)}_{maximize \ margin}  \textrm{such that} \ \  \underbrace{\forall i \ y_{i}(\mathbf{w}^Tx_{i}+b)\geq 0}_{separating \ hyperplane}
+$$
+If we plug in the definition of $\gamma$ we obtain:
+$$ \underbrace{\max_{\mathbf{w},b}\underbrace{\frac{1}{\left \| \mathbf{w} \right \|}_{2}\min_{\mathbf{x}_{i}\in D}\left | \mathbf{w}^T\mathbf{x}_{i}+b \right |}_{\gamma(\mathbf{w},b)} \ }_{maximize \ margin} \ \  s.t. \ \  \underbrace{\forall i \ y_{i}(\mathbf{w}^Tx_{i}+b)\geq 0}_{separating \ hyperplane} $$
+
+
+Because the hyperplane is scale invariant, we can fix the scale of $\mathbf{w},b$ anyway we want. Let's be clever about it, and choose it such that $$\min_{\mathbf{x}\in D}\left | \mathbf{w}^T\mathbf{x}+b \right |=1.$$ 
+We can add this re-scaling as an equality constraint. 
+Then our objective becomes: 
+$$\max_{\mathbf{w},b}\frac{1}{\left \| \mathbf{w} \right \|_{2}}\cdot 1 = \min_{\mathbf{w},b}\left \| \mathbf{w} \right \|_{2} = \min_{\mathbf{w},b} \mathbf{w}^\top \mathbf{w}$$
+(Where we made use of the fact $f(z)=z^2$ is a monotonically increasing function for $z\geq 0$ and $\|\mathbf{w}\|\geq 0$; i.e. the $\mathbf{w}$ that maximizes $\|\mathbf{w}\|_2$ also maximizes $\mathbf{w}^\top \mathbf{w}$.)</p>
+
+The new optimization problem becomes: <br>
+$$
+\begin{align}
+&\min_{\mathbf{w},b} \mathbf{w}^\top\mathbf{w} & \\
+&\textrm{s.t. } 
+\begin{matrix}
+\forall i, \ y_{i}(\mathbf{w}^T \mathbf{x}_{i}+b)&\geq 0\\ 
+\min_{i}\left | \mathbf{w}^T \mathbf{x}_{i}+b \right | &= 1
+\end{matrix}
+\end{align}$$
+
+<p>These constraints are still hard to deal with, however luckily we can show that (for the optimal solution) they are equivalent to a much simpler formulation. (Makes sure you know how to prove that the two sets of constraints are equivalent.) 
+$$
+\begin{align}
+&\min_{\mathbf{w},b}\mathbf{w}^T\mathbf{w}&\\ 
+&\textrm{s.t.} \ \ \ \forall i \ y_{i}(\mathbf{w}^T \mathbf{x}_{i}+b) \geq 1 &
+\end{align}
+$$ </p>
+
+<p>This new formulation is a <a href="https://en.wikipedia.org/wiki/Quadratic_programming">quadratic optimization problem</a>. The objective is <i>quadratic</i> and the constraints are all <i>linear</i>.  We can be solve it efficiently with any QCQP (Quadratically Constrained Quadratic Program) solver.  It has a unique solution whenever a separating hyper plane exists. It also has a nice interpretation: Find the simplest hyperplane (where simpler means smaller $\mathbf{w}^\top\mathbf{w}$) such that all inputs lie at least 1 unit away from the hyperplane on the correct side. </p>
+
+<h3>SVM with soft constraints</h3>
+
+<p>
+If the data is low dimensional it is often the case that there is no separating hyperplane between the two classes.  In this case, there is no solution to the optimization problems stated above. We can fix this by allowing the constraints to be violated ever so slight with the introduction of slack variables:
+$$\begin{matrix}
+&nbsp &nbsp &nbsp &nbsp \min_{\mathbf{w},b}\mathbf{w}^T\mathbf{w}+C\sum_{i=1}^{n}\xi _{i} &nbsp &nbsp &nbsp &nbsp \\ 
+&nbsp &nbsp &nbsp &nbsp s.t. \ \forall i \ y_{i}(\mathbf{w}^T\mathbf{x}_{i}+b)\geq 1-\xi_i &nbsp &nbsp &nbsp &nbsp \\ 
+&nbsp &nbsp &nbsp &nbsp  \forall i \ \xi_i \geq 0 &nbsp &nbsp &nbsp &nbsp
+\end{matrix}$$
+The slack variable $\xi_i$ allows the input $\mathbf{x}_i$ to be closer to the hyperplane (or even be on the wrong side), but there is a penalty in the objective function for such "slack". 
+If C is very large, the SVM becomes very strict and tries to get all points to be on the right side of the hyperplane. If C is very small, the SVM becomes very loose and may "sacrifice" some points to obtain a simpler (i.e. lower $\|\mathbf{w}\|_2^2$) solution. </p>
+
+
+<h5>Unconstrained Formulation:</h5>
+
+Let us consider the value of $\xi_i$ for the case of $C\neq 0$. Because the objective will always try to minimize $\xi_i$ as much as possible, the equation must hold as an <i>equality</i> and we have:
+$$
+\xi_i=\left\{
+\begin{array}{cc}
+\ 1-y_{i}(\mathbf{w}^T \mathbf{x}_{i}+b) & \textrm{ if $y_{i}(\mathbf{w}^T \mathbf{x}_{i}+b)<1$}\\
+0 & \textrm{ if $y_{i}(\mathbf{w}^T \mathbf{x}_{i}+b)\geq 1$}
+\end{array}
+\right.
+$$
+This is equivalent to the following closed form:
+$$
+\xi_i=\max(1-y_{i}(\mathbf{w}^T \mathbf{x}_{i}+b) ,0).
+$$
+If we plug this closed form into the objective of our SVM optimization problem, we obtain the following <i>unconstrained</i> version as loss function and regularizer:
+$$
+&nbsp &nbsp &nbsp &nbsp \min_{\mathbf{w},b}\underbrace{\mathbf{w}^T\mathbf{w}}_{l_{2}-regularizer}+&nbsp &nbsp &nbsp &nbsp C\  \sum_{i=1}^{n}\underbrace{\max\left [ 1-y_{i}(\mathbf{w}^T \mathbf{x}+b),0 \right ]}_{hinge-loss} &nbsp &nbsp &nbsp &nbsp	\label{eq:svmunconst}
+$$
+This formulation allows us to optimize the SVM paramters ($\mathbf{w},b$) just like logistic regression (e.g. through gradient descent). The only difference is that we have the <b>hinge-loss</b> instead of the <b>logistic loss</b>.
+
+
+<blockquote>
+    <center>
+
+
+<img src="images/svm/figure.png" width="500px" />
+
+	<p>Figure 2: The five plots above show different boundary of hyperplane and the optimal hyperplane separating example data, when C=0.01, 0.1, 1, 10, 100.</p>
+    </center>
+</blockquote>
+
+</body>
+</html>

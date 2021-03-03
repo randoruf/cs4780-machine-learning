@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 5: Bayes Classifier and Naive Bayes </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>Bayes Classifier and Naive Bayes</h2>
+<div style="float: left">
+<a href="lecturenote04.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote06.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<br>
+<br>
+<u>Idea:</u> Estimate $\hat{P}(y | \vec{x})$ from the data, then use the Bayes Classifier on $\hat{P}(y|\vec{x})$.
+</br> </br>
+So how can we estimate $\hat{P}(y | \vec{x})$?
+</br> </br>
+One way to do this would be to use the MLE method. Assuming that $y$ is discrete,
+$$
+\hat{P}(y|\vec{x}) = \frac{\sum_{i=1}^{n} I(\vec{x}_i = \vec{x} \wedge \vec{y}_i = y)}{ \sum_{i=1}^{n} I(\vec{x}_i = \vec{x})}
+$$
+<center>
+<img src="images/naive_bayes/naive_bayes_img1.png" width="500px" />
+</center>
+From the above diagram, it is clear that, using the MLE method, we can estimate $\hat{P}(y|\vec{x})$ as 
+$$
+\hat{P}(y|\vec{x}) = \frac{|C|}{|B|}
+$$
+But there is a big problem with this method.
+</br> </br>
+<u>Problem:</u> The MLE estimate is only good if there are many training vectors with the <b>same identical</b> features as
+$\vec{x}$!
+</br> </br>
+In <b>high dimensional spaces</b> (or with continuous $\vec{x}$), this never happens! So $|B| \rightarrow 0$ and $|C| \rightarrow 0$.
+</br> </br>
+To get around this issue, we can make a 'naive' assumption.
+<h3>Naive Bayes</h3>
+We can approach dilemma with a simple trick, and an additional assumption. The trick part is to estimate $P(y)$ and $P(\vec{x} | y)$ instead, since, by Bayes rule,
+$$
+P(y | \vec{x}) = \frac{P(\vec{x} | y)P(y)}{P(\vec{x})}.
+$$
+Recall from
+<a href="lecturenote04.html">Estimating Probabilities from Data</a> 
+that estimating $P(y)$ and $P(\vec{x} | y)$ is called <i>generative learning</i>.
+<br>
+Estimating $P(y)$ is easy. If $Y$ takes on discrete binary values, for example, this just becomes coin tossing. We simply need to count how many times we observe each outcome (in this case each class):
+$$P(y = c)  = \frac{\sum_{i=1}^{n} I(y_i = c)}{n} = \hat\pi_c
+$$
+
+
+</br> </br>
+Estimating $P(\vec{x}|y)$, however, is not easy!
+The additional assumption that we make is the <i>Naive Bayes assumption</i>.
+</br> </br>
+<u>Naive Bayes Assumption:</u>
+$$
+P(\vec{x} | y) = \prod_{\alpha = 1}^{d} P(x_\alpha | y), \text{where } x_\alpha = [\vec{x}]_\alpha \text{ is the value for feature } \alpha
+$$
+i.e., feature values are <b>independent given the label!</b> This is a very <b>bold</b> assumption.
+For example, a setting where the Naive Bayes classifier is often used is spam filtering. Here, the data is emails and the label is <i>spam</i> or <i>not-spam</i>.  The Naive Bayes assumption implies that the words in an email are conditionally independent, given that you know that an email is spam or not. Clearly this is not true. Neither the words of spam or not-spam emails are drawn independently at random. However, the resulting classifiers can work well in prctice even if this assumption is violated. 
+</br> </br>
+So, for now, let's pretend the Naive Bayes assumption holds.
+</br> </br>
+Then the Bayes Classifier can be defined as
+\begin{align}
+h(\vec{x}) &= argmax_y P(y | \vec{x}) \\
+&= argmax_y \; \frac{P(\vec{x} | y)P(y)}{P(\vec{x})} \\
+&= argmax_y \; P(\vec{x} | y) P(y) && \text{($P(\vec{x})$ does not depend on $y$)} \\
+&= argmax_y \; \prod_{\alpha=1}^{d} P(x_\alpha | y) P(y) && \text{(by the naive assumption)}\\
+&= argmax_y \; \sum_{\alpha = 1}^{d} log(P(x_\alpha | y)) + log(P(y)) && \text{(as log is a monotonic function)}
+\end{align}
+
+Estimating $log(P(x_\alpha | y))$ is easy as we only need to consider one dimension. And estimating $P(y)$
+is not affected by the assumption.
+</br> </br>
+
+
+<h3>Estimating $P([\vec{x}]_\alpha | y)$</h3>
+Now that we know how we can use our assumption to make the estimation of $P(y|\vec{x})$ tractable. 
+There are 3 notable cases in which we can use our naive Bayes classifier.
+
+<h4>Case #1: Categorical features</h4>
+<u>Features:</u> 
+$$[\vec{x}]_\alpha \in \{f_1, f_2, \cdots, f_{K_\alpha}\}$$
+Each feature $\alpha$ falls into one of $K_\alpha$ categories.
+(Note that the case with binary features is just a specific case of this, where $K_\alpha = 2$.) An example of such a setting may be medical data where one feature could be <i>gender</i> (male / female) or <i>marital status</i> (single / married / widowed). 
+</br> </br>
+<u>Model $P(x_\alpha \mid y)$:</u>
+$$
+P(x_{\alpha} = j | y=c) = [\theta_{jc}]_{\alpha} \\
+\text{ and } \sum_{j=1}^{K_\alpha} [\theta_{jc}]_{\alpha} = 1
+$$
+where $[\theta_{jc}]_{\alpha} $ is the probability of feature $\alpha$ having the value $j$, given that the label is $c$.
+And the constraint indicates that $x_{\alpha}$ must have one of the categories $\{1, \dots, K_\alpha\}$.
+</br> </br>
+<u>Parameter estimation:</u>
+\begin{align}
+[\hat\theta_{jc}]_{\alpha} &= \frac{\sum_{i=1}^{n} I(y_i = c) I(x_{i\alpha} = j) + l}{\sum_{i=1}^{n} I(y_i = c) + lK_\alpha},
+\end{align}
+where $x_{i\alpha} = [\vec{x}_i]_\alpha$ and $l$ is a smoothing parameter.
+</br></br>
+Training the Naive Bayes classisifer corresponds to estimating $\vec{\theta}_{jc}$ for all $j$ and $c$ and storing them in the respective conditional probability tables (CPT). Also note that by setting $l=0$ we get an MLE estimator, $l>0$ leads to MAP. If we set $l= +1$ we get <i>Laplace smoothing</i>.
+</br></br>
+<u>Prediction:</u>
+$$
+argmax_y \; P(y=c \mid \vec{x}) \propto argmax_y \; \hat\pi_c \prod_{\alpha = 1}^{d} [\hat\theta_{jc}]_\alpha
+$$
+
+<h4>Case #2: Multinomial features</h4>
+<u>Features:</u> 
+\begin{align}
+x_\alpha \in \{0, 1, 2, \dots, m\} \text{ and } m = \sum_{\alpha = 1}^d x_\alpha 
+\end{align}
+Each feature $\alpha$ represents a count and m is the length of the sequence. 
+An example of this could be the count of a specific word $\alpha$ in a document of length $m$ and $d$ is the size of the vocabulary.
+</br> </br>
+<u>Model $P(\vec{x} \mid y)$:</u>
+Use the multinomial distribution
+$$
+P(\vec{x} \mid m, y=c) = \frac{m!}{x_1! \cdot x_2! \cdot \dots \cdot x_d!} \prod_{\alpha = 1}^d
+\left(\theta_{\alpha c}\right)^{x_\alpha}
+$$
+where $\theta_{\alpha c}$ is the probability of selecting $x_\alpha$ and $\sum_{\alpha = 1}^d \theta_{\alpha c} =1$. 
+So, we can use this to generate a spam email, i.e., a document $\vec{x}$ of class $y = \text{spam}$ by picking $m$ words independently at random from the vocabulary of $d$ words using $P(\vec{x} \mid y = \text{spam})$.
+</br> </br>
+<u>Parameter estimation:</u>
+\begin{align}
+\hat\theta_{\alpha c} = \frac{\sum_{i = 1}^{n} I(y_i = c) x_{i\alpha} + l}{\sum_{i=1}^{n} I(y_i = c) \sum_{\beta = 1}^{d} x_{i\beta} + l \cdot d }
+\end{align}
+where the numerator sums up all counts for feature $x_\alpha$ and the denominator sums up all counts of all features across all data points. E.g.,
+$$
+\frac{\text{# of times word } \alpha \text{ appears in all spam emails}}{\text{# of words in all spam emails combined}}.
+$$
+Again, $l$ is the smoothing parameter. 
+</br> </br>
+<u>Prediction:</u>
+$$
+argmax_y \; P(y = c \mid \vec{x}) \propto argmax_y \; \hat\pi_c \prod_{\alpha = 1}^d \hat\theta_{\alpha c}^{x_\alpha}
+$$
+<h4>Case #3: Continuous features (Gaussian Naive Bayes)</h4> 
+<u>Features:</u> 
+\begin{align}
+x_\alpha \in \mathbb{R} && \text{(each feature takes on a real value)}
+\end{align}
+</br> </br>
+<u>Model $P(x_\alpha \mid y)$:</u> Use Gaussian distribution 
+\begin{align}
+P(x_\alpha \mid y=c) = \mathcal{N}\left(\mu_{\alpha c}, \sigma^{2}_{\alpha c}\right) = \frac{1}{\sqrt{2 \pi} \sigma_{\alpha c}} e^{-\frac{1}{2} \left(\frac{x_\alpha - \mu_{\alpha c}}{\sigma_{\alpha c}}\right)^2} 
+\end{align}
+Note that the model specified above is based on our assumption about the data - that each feature $\alpha$ comes from a class-conditional Gaussian distribution.
+Other specification could be used as well.
+</br> </br>
+<u>Parameter estimation:</u>
+\begin{align}
+\mu_{\alpha c} &\leftarrow \frac{1}{n_c} \sum_{i = 1}^{n} I(y_i = c) x_{i\alpha} && \text{where $n_c = \sum_{i=1}^{n} I(y_i = c)$} \\
+\sigma_{\alpha c}^2 &\leftarrow \frac{1}{n_c} \sum_{i=1}^{n} I(y_i = c)(x_{i\alpha} - \mu_{\alpha c})^2
+\end{align}
+
+<h3>Naive Bayes is a linear classifier</h3>
+1. Suppose that $y_i \in \{-1, +1\}$ and features are <u>multinomial</u>
+</br> </br>
+We can show that  
+$$
+h(\vec{x}) = argmax_y \; P(y) \prod_{\alpha - 1}^d P(x_\alpha \mid y) = sign(\vec{w}^\top \vec{x} + b)
+$$
+That is, 
+$$
+\vec{w}^\top \vec{x} + b > 0 \Longleftrightarrow h(\vec{x}) = +1.
+$$
+</br> </br>
+
+As before, we define $P(x_\alpha|y=+1)\propto\theta_{\alpha+}^{x_\alpha}$ and $P(Y=+1)=\pi_+$:
+\begin{align}
+[\vec{w}]_\alpha &= log(\theta_{\alpha +}) - log(\theta_{\alpha -}) \\
+b &= log(\pi_+) - log(\pi_-)
+\end{align}
+If we use the above to do classification, we can compute for $\vec{w}^\top \cdot \vec{x} + b$
+</br> </br>
+Simplifying this further leads to 
+\begin{align}
+\vec{w}^\top \cdot \vec{x} + b > 0 &\Longleftrightarrow \sum_{\alpha = 1}^{d} [\vec{x}]_\alpha (log(\theta_{\alpha +}) - log(\theta_{\alpha -})) + log(\pi_+) - log(\pi_-) > 0 \\
+&\Longleftrightarrow \frac{\prod_{\alpha = 1}^{d} P([\vec{x}]_\alpha | Y = +1)\pi_+}{\prod_{\alpha =1}^{d}P([\vec{x}]_\alpha | Y = -1)\pi_-} > 1 \\
+&\Longleftrightarrow P(Y = +1 | \vec{x}) > P(Y = -1 | \vec{x}) && \text{(By our naive Bayes assumption)} \\
+&\Longleftrightarrow h(\vec{x}) = +1 && \text{(By definition of $h(\vec{x})$)}
+\end{align}
+
+
+
+2. In the case of continuous features (Gaussian Naive Bayes), we can show that
+$$
+P(y \mid \vec{x}) = \frac{1}{1 + e^{-y (\vec{w}^\top \vec{x} +b) }}
+$$
+This model is also known as logistic regression. NB and LR produce asymptotically the same model if the Naive Bayes assumption holds. 
+
+
+<!--<h3>"True" Bayesian Naive Bayes</h3>
+Similar to the Bayesian approach to coin flipping, we can incorporate a prior distribution over $\vec \theta$ and $\vec \pi$ and utilize the posterior distribution for predictions. Common choices for the prior distributions are
+$$
+P(\vec \pi) \sim \text{Dir}(\vec \beta) \; \text{ and }\; P(\theta_{\alpha c}) \sim \text{Beta}(\beta_0, \beta_1), 
+$$
+where $\beta$, $\beta_0$, and $\beta_1$ are the <i>hyper-parameters</i>. See MLaPP section 3.5.2 for more details. 
+-->
+
+<!--
+<h3>Some extra notes related to lecture on 9/21/2015</h3>
+I think there is some confusion about Naive Bayes with the multinomial distribution. 
+Let me explain it one more time in a different way. 
+</br> </br>
+The multinomial view:
+Let us assume we have d possible words in our dictionary. We have a data instance (e.g. an email) consisting of m words. 
+Each of the $d$ words has a probability for spam
+$p_1,\dots,p_d$ and for ham $q_1,\dots,q_d$ (with $\sum_{\alpha=1}^d p_\alpha=1=\sum_{\alpha=1}^d q_\alpha$.)
+We also have probabilities that an email is spam $\pi_s$ and that it is ham $\pi_h$ with $\pi_s+\pi_h=1$. 
+</br> </br>
+
+
+If you want to generate an email, you follow the following procedure. First you decide with probability $\pi_s$  if you want to write a spam email or a ham email.  Then you pick the corresponding probability distribution and  randomly pick $m$ words. 
+$w_1,\dots,w_m$. 
+Each of these words is picked independently. So if you generate a spam email, the probability that the first term is word $\alpha$ is $p_\alpha$.
+Let us write $w_i=\alpha$ to denote that the $i^{th}$ word in the email was word $\alpha$, where $\alpha\in\{1,\dots,d\}$.
+</br> </br>
+
+What is the probability that a particular email was generated that way, with the spam label (so we used $p_\alpha$ instead of $q_\alpha$)?
+Keep in mind that  in the bag of words representation word order does not matter and we are therefore mostly concerned with how many times each word appeared. Let these counts be $n_1,\dots, n_d$ to denote the occurrences of word 1, word 2, ... word d respectively (with $\sum_{\alpha=1}^d n_\alpha=m$). 
+To represent your email as a vector, you write $\vec x=[n_1,\dots,n_d]^\top$. 
+</br> </br>
+
+The multinomial distribution then specifies that the likelihood of the email is
+\begin{align}
+P(\vec x | Y=spam)=\frac{m!}{n_1!\times \dots \times n_d!}p_1^{n_1}\times \dots \times p_d^{n_d}
+\end{align}
+We don't actually need the exact likelihood, as we can decide the label by evaluating $\frac{P(Y=spam|\vec x)}{P(Y=ham|\vec x)}$.  (If this fraction is greater than one the email is classified as spam otherwise ham.) In this fraction all normalization constants disappear as they are the same for spam and ham. 
+It is therefore enough to evaluate
+$$
+P(\vec x | Y=spam)\propto p_1^{n_1}\times \dots \times p_d^{n_d}
+$$
+This is exactly what we used in class.  
+You notice, that $m$  disappeared. So, to use naive bayes  on document data we do not have to make any assumptions about the length of the document.  We simply check if this particular document, no matter what  its length is, contains words that are more likely to be generated with the spam generating process or with the ham generating process. 
+</br> </br>
+
+So the ratio we finally compute is:
+\begin{align}
+\frac{P(Y=spam| \vec{x})}{P(Y=ham|\vec x)}=\frac{P(\vec x|Y=spam)P(Y=spam)}{P(\vec x|Y=ham)P(Y=ham)}=\frac{p_1^{n_1}\times\dots\times p_d^{n_d}\times\pi_s}{q_1^{n_1}\times\dots\times q_d^{n_d}\times\pi_h}
+\end{align}
+</br> </br>
+
+
+How do we get the probabilities $p_\alpha$?
+</br> </br>
+
+Well, $p_\alpha$ is the probability that word $\alpha$ is chosen to generate a spam email. So we can estimate it as the fraction of words in spam emails that are word $\alpha$:
+
+$$p_\alpha=\frac{\textrm{no. of times word $\alpha$ appears in spam emails in our training data}}{\textrm{no. of words in all spam emails in our training data}}$$
+</br> </br> -->
+
+</body>
+</html>

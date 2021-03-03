@@ -1,0 +1,253 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX","input/MathML","output/SVG", "output/CommonHTML"],
+  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js", "CHTML-preview.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
+  },
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>16: KD Trees </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>16: KD Trees </h2>
+<br>
+<div style="float: left">
+<a href="lecturenote15.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote17.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+
+
+<h3>Time Complexity of k-NN</h3>
+Let's look at the time complexity of k-NN.<br>
+We are in a $d$-dimensional space.<br> 
+To make it easier, let's assume we've already processed some number of inputs, and we want to know the time complexity of adding one more data point.<br>
+When training, k-NN simply memorizes the labels of each data point it sees.<br>
+This means adding one more data point is $O(d)$.<br>
+When testing, we need to compute the distance between our new data point and all of the data points we trained on.<br>
+If $n$ is the number of data points we have trained on, then our time complexity for training is $O(dn)$.<br>
+Classifying one test input is also $O(dn)$. <br>
+To achieve the best accuracy we can, we would like our training data set to be very large ($n\gg 0$), but this  will soon become a serious bottleneck during test time.<br> 
+
+<u>Goal</u>: Can we make k-NN faster during testing?
+We can if we use clever data structures.<br>
+
+<h3>k-Dimensional Trees</h3>
+The general idea of KD-trees is to partition the feature space.<br>
+We want discard lots of data points immediately because their partition is further away than our $k$ closest neighbors.<br>
+
+We partition the following way:
+<ol>
+<li> Divide your data into two halves, e.g. left and right, along one feature.
+<li> For each training input, remember the half it lies in.
+</ol>
+
+How can this partitioning speed up testing? <br>
+Let's think about it for the one neighbor case.
+<ol>
+<li> Identify which side the test point lies in, e.g. the right side.
+<li> Find the nearest neighbor $x^R_{\mathrm{NN}}$ of $x_t$ in the same side. The $R$ denotes that our nearest neighbor is also on the right side.
+<li> Compute the distance between $x_y$ and the dividing "wall". Denote this as $d_w$. If $d_w > d(x_t, x^R_{\mathrm{NN}})$ you are done, and we get a 2x speedup.
+</ol>
+
+<blockquote>
+    <center>
+    <img width="75%" src="images/kdtrees/1.png" />
+  <p>Fig: Partitioning the feature space. </p>
+    </center>
+</blockquote>
+<!-- \begin{figure}
+\centering
+\includegraphics[width=0.8\linewidth]{Pictures/c3/figure1_cropped.pdf}
+\caption{}
+\end{figure} -->
+
+In other words: if the distance to the partition is larger than the distance to our closest neighbor, we know that none of the data points <i>inside</i> that partition can be closer.<br>
+We can avoid computing the distance to any of the points in that entire partition.
+<br>
+We can prove this formally with the triangular inequality. (See Figure 2 for an illustration.)<br>
+Let  $d(x_t,x)$ denote the distance between our test point $x_t$ and a candidate $x$. We know that $x$ lies on the other side of the wall, so this distance is dissected into two parts $d(x_t,x)=d_1+d_2$, where $d_1$ is the part of the distance on $x_t's$ side of the wall and $d_2$ is the part of the distance on $x's$ side of the wall. Also let $d_w$ denote the shortest distance from $x_t$ to the wall. We know that $d_1>d_w$ and therefore it follows that
+\[
+d(x_t, x)=d_1+d_2\geq d_w+d_2 \geq d_w.
+\]
+This implies that if $d_w$ is already larger than the distance to the current best candidate point for the nearest neighbor, we can safely discard $x$ as a candidate. 
+
+<blockquote>
+    <center>
+    <img width="75%" src="images/kdtrees/ball.png" />
+  <p>Fig 2: The bounding of the distance between $\vec x_t$ and $\vec x$ with KD-trees and Ball trees (here $\vec x$ is drawn twice, once for each setting). The distance can be dissected into two components $d(\vec x_t,\vec x)=d_1+d_2$, where $d_1$ is the outside ball/box component and $d_2$ the component inside the ball/box. In both cases $d_1$ can be lower bounded by the distance to the wall, $d_w$,  or ball, $d_b$, respectively i.e.  $d(\vec x_t,\vec x)=d_1+d_2\geq d_w+d_2\geq d_w$. </p>
+    </center>
+</blockquote>
+<!-- \begin{figure}[t]
+\centering
+\includegraphics[width=0.75\linewidth]{Pictures/c3/kd-ball-figure.pdf}
+\caption{The bounding of the distance between $\vec x_t$ and $\vec x$ with KD-trees and Ball trees (here $\vec x$ is drawn twice, once for each setting). The distance can be dissected into two components $d(\vec x_t,\vec x)=d_1+d_2$, where $d_1$ is the outside ball/box component and $d_2$ the component inside the ball/box. In both cases $d_1$ can be lower bounded by the distance to the wall, $d_w$,  or ball, $d_b$, respectively. \emph{i.e.}  $d(\vec x_t,\vec x)=d_1+d_2\geq d_w+d_2\geq d_w$. \label{fig:c3:kdballtri}}
+\end{figure} -->
+
+<br>
+<u>Quiz</u>: Construct a case where this does not work.
+
+
+<h4>KD-tree data structure</h4>
+
+<blockquote>
+    <center>
+    <img width="75%" src="images/kdtrees/2.png" />
+    <img width="75%" src="images/kdtrees/3.png" />
+  <p>Fig: The partitioned feature space with corresponding KD-tree. </p>
+    </center>
+</blockquote>
+<!-- \begin{figure}[hb]
+\centering
+\includegraphics[width=0.45\linewidth]{Pictures/c3/figure2_cropped.pdf}
+\hspace{5pt}
+\includegraphics[width=0.45\linewidth]{Pictures/c3/figure3_cropped.pdf}
+\caption{The partitioned feature space with corresponding KD-tree.}
+\end{figure} -->
+
+<u>Tree Construction</u>:
+<ol>
+  <li> Split data recursively in half on exactly one feature.
+  <li> Rotate through features.
+</ol>
+When rotating through features, a good heuristic is to pick the feature with maximum variance.
+
+<br><br><br>
+<!--
+<u>$\textrm{findNNKDTree}(x,T,d_{best},i_{best})$</u>: For a test point $x_t$,
+<ol>
+<li> If $T$ is a leaf, find nearest neighbor $i_{best}$ with distance $d_{best}$ and Return($d_{best},i_{best}$)
+<li> Compute distance $d_L$ and $d_R$ from $x$ to the walls of the left and right sub-trees of $T$. </li>
+<li> If $d_L\leq d_R$:</li>
+<li>	$(d_{best},i_{best})=\textrm{findNNKDTree}(x,T_L,d_{best})$
+<li>    If $d_{best}\geq d_R$, $(d_{best},i_{best})=\textrm{findNNKDTree}(x,T_L,d_{best})$
+<li> Descend $x_t$ all the way into the leaf it falls into.
+<li> Find the best nearest neighbor $x'$ in that leaf. 
+<li> Traverse the remainder of the tree using depth-first search (DFS). Prune away all subtrees with $d_w > d(x_t, x')$. Update $x'$ as you go along.
+<li> Return($d_{best},i_{best}$)
+</ol>
+<br>
+Call $\textrm{findKNNKDTree}(x,T,\infty)$. 
+-->
+
+
+
+<br><br>
+<u>Example</u>: 
+<blockquote>
+    <center>
+    <img width="75%" src="images/kdtrees/2.png" />
+    <!-- <img width="75%" src="images/kdtrees/3.png" /> -->
+  <!-- <p>Fig: The partitioned feature space with corresponding KD-tree. </p> -->
+    </center>
+</blockquote>
+
+Which partitions can be pruned? <br>
+Which must be searched and in what order?<br>
+
+<u>Pros</u>:
+<ul>
+  <li> Exact.
+  <li> Easy to build.
+</ul>
+
+<u>Cons</u>:
+<ul>
+  <li> Curse of Dimensionality makes KD-Trees ineffective for higher number of dimensions.
+  <li> All splits are axis aligned.
+</ul>
+
+<u>Approximation</u>: Limit search to $m$ leafs only.
+
+<h3>Ball-trees</h3>
+Similar to KD-trees, but instead of boxes use hyper-spheres (balls). (See Figure 2 for an illustration.)<br>
+As before we can dissect the distance and use the triangular inequality 
+\begin{equation}
+d(x_{t}, x)=d_1+d_2\geq d_{b} + d_2\geq d_b\label{eq:balldist}
+\end{equation}
+If the distance to the ball, $d_b$, is larger than distance to the currently closest neighbor, we can safely ignore the ball and all points within.
+<br>
+The ball structure allows us to partition the data along an underlying manifold that our points are on, instead of repeatedly dissecting the entire feature space (as in KD-Trees).
+
+
+
+<h4>Ball-tree Construction</h4>
+
+
+
+Input: set $S$, $n=\vert S \vert$, $k$ 
+<blockquote>
+    <center>
+    <img width="120%" src="images/kdtrees/ball&#32;tree&#32;algo.png" />
+    <!-- <img width="75%" src="images/kdtrees/3.png" /> -->
+  <!-- <p>Fig: The partitioned feature space with corresponding KD-tree. </p> -->
+    </center>
+</blockquote>
+
+<!-- \begin{algorithm}
+\caption{Balltree in Pseudo-code}\label{alg:Balltree}
+\begin{algorithmic}[1]
+\Procedure{Balltree}{$S, k$}
+\IIf{$\vert S \vert < k$} stop \EndIIf\Comment{Return leaf containing $S$}
+\State pick $x_{0} \in S$ uniformly at random
+\State pick $x_{1} = \argmax\limits_{x \in S} \; d(x_{0}, x)$
+\State pick $x_{2} = \argmax\limits_{x \in S} \; d(x_{1}, x)$
+\State $\forall i = 1 \ldots \vert S \vert$, $z_{i} = (x_{1} - x_{2})^{T}x_{i}$ \hspace{10pt} $\leftarrow$ project data onto $(x_{1} - x_{2})$
+\State $m = \mathrm{median}(z_{1}, \cdots, z_{\vert S \vert})$
+\State $S_{L} = \Set{x \in S}{z_i < m}$
+\State $S_{R} = \Set{x \in S}{z_i \geq m}$
+\State \textbf{Return } tree:
+    \begin{itemize}
+      \item[--] center $c = \mathrm{mean}(S)$  \
+        \item[--] radius $r = \mathrm{max}_{x \in S} \; d(x, c)$
+        \item[--] children: $\mathrm{Balltree}(S_{L}, k)$ and $\mathrm{Balltree}(S_{R}, k)$
+    \end{itemize}
+
+\EndProcedure
+\end{algorithmic}
+\end{algorithm} -->
+
+<i>Note:</i> Steps 3 & 4 pick the direction with a large spread ($x_{1} - x_{2}$)
+
+
+
+<h4>Ball-Tree Use</h4>
+Same as KD-Trees<br>
+Slower than KD-Trees in low dimensions ($d \leq 3$) but a lot faster in high dimensions. Both are affected by the curse of dimensionality, but Ball-trees tend to still work if data exhibits local structure (e.g. lies on a low-dimensional manifold).
+
+
+
+<h3>Summary</h3>
+<ul>
+<li> $k$-NN is slow during testing because it does a lot of unecessary work.
+<li> KD-trees partition the feature space so we can rule out whole partitions that are further away than our closest $k$ neighbors. However, the splits are axis aligned which does not extend well to higher dimensions.
+<li> Ball-trees partition the manifold the points are on, as opposed to the whole space. This allows it to perform much better in higher dimensions.
+</ul>
+</body>

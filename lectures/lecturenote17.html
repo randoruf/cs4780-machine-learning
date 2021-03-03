@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX","input/MathML","output/SVG", "output/CommonHTML"],
+  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js", "CHTML-preview.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
+  },
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>17: Decision Trees </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>17: Decision Trees </h2>
+<br>
+<div style="float: left">
+<a href="lecturenote16.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote18.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<br>
+<h3>Motivation for Decision Trees</h3>
+Often you don't care about the exact nearest neighbor, you just want to make a prediction.
+Nearest neighbor search is slow and requires a lot of storage <u>$O(nd)$</u>.
+<br>
+<u>New idea</u>:<br>
+<ol>
+<li> Build a KD-type tree with only <u>pure</u> leaves
+<li> Descent test point and make decision based on leaf label. Exact nearest neighbor is not really needed. 
+<blockquote>
+    <center>
+    <img src="images/lec17/figure_1.png" width="75%"/>
+    <img src="images/lec17/figure_2.png" width="75%"/>
+    <p>Binary decision tree. Only labels are stored.</p>
+</blockquote>
+</ol>
+
+<u>New goal</u>: Build a tree that is:<br>
+<ol>
+<li> Maximally compact
+<li> Only has pure leaves
+</ol>
+
+<u>Quiz</u>: Is it always possible to find a consistent tree?<br>
+Yes, if and only if no two input vectors have identical features but different labels
+<br>
+<u>Bad News! Finding a <b>minimum size</b> tree is NP-Hard!!</u>
+<br>
+<u>Good News</u>: We can approximate it very effectively with a greedy strategy.
+We keep splitting the data to minimize an <u>impurity function</u> that measures label purity amongst the children. 
+<br>
+<h3>Impurity Functions</h3>
+
+Data: $S=\left \{ \left ( \mathbf{x}_1,y_1 \right ),\dots,\left ( \mathbf{x}_n,y_n \right ) \right \}, y_i\in\left \{ 1,\dots,c \right \}$, where $c$ is the number of classes
+
+<h4>Gini impurity</h4>
+
+Let $S_k\subseteq S$ where $S_k=\left \{ \left ( \mathbf{x},y \right )\in S:y=k \right \}$ (all inputs with labels $k$)
+<br>
+$S=S_1\cup \dots \cup S_c$
+<br>
+<u>Define</u>: 
+\[p_k=\frac{\left | S_k \right |}{\left | S \right |}\leftarrow \textrm{fraction of inputs in } S \textrm{ with label } k\]
+<br>
+<u>Note:</u> This is different from Gini coefficient. See <a href="https://en.wikipedia.org/wiki/Decision_tree_learning#Gini_impurity">Gini impurity</a> (not to be confused with the <a href="http://en.wikipedia.org/wiki/Gini_coefficient">Gini Coefficient</a>)
+ of a leaf: \[G(S)=\sum_{k=1}^{c}p_k(1-p_k)\]
+<br>
+<blockquote>
+    <center>
+    <img width="75%" src="images/lec17/figure_3.png" />
+  <p>Fig: Gini Impurity Function</p>
+    </center>
+</blockquote>
+<!-- %Insert Gini Index picture
+\begin{figure}
+\centering
+\includegraphics[width=0.6\linewidth]{Pictures/c4/figure_3.pdf}
+\caption{Gini impurity function}
+\end{figure}
+ -->
+Gini impurity of a tree: 
+\[G^T(S)=\frac{\left | S_L \right |}{\left | S \right |}G^T(S_L)+\frac{\left | S_R \right |}{\left | S \right |}G^T(S_R)\]
+where:
+<ul>
+<li> $\left ( S=S_L\cup S_R \right )$
+<li> $S_L\cap S_R=\varnothing$
+<li> $\frac{\left | S_L \right |}{\left | S \right |}\leftarrow \textrm{fraction of inputs in left substree}$
+<li> $\frac{\left | S_R \right |}{\left | S \right |}\leftarrow \textrm{fraction of inputs in right substree}$
+</ul>
+
+<h4>Entropy</h4>
+Let $p_1,\dots,p_k$ be defined as before.
+
+
+We know what we don't want (Uniform Distribution): $p_1=p_2=\dots=p_c=\frac{1}{c}$
+
+This is the worst case since each leaf is equally likely. Prediction is random guessing.
+
+Define the impurity as how close we are to uniform. Use $KL$-Divergence to compute "closeness"<br>
+Note: $KL$-Divergence is not a metric because it is not symmetric, i.e., $KL(p||q)\neq KL(q||p)$.
+<br>
+Let $q_1,\dots,q_c$ be the uniform label/distribution. i.e. $q_k=\frac{1}{c} \forall k$
+\[KL(p||q)=\sum_{k=1}^{c}p_klog\frac{p_k}{q_k}\geq 0 \leftarrow \textrm{$KL$-Divergence}\]
+\[=\sum_{k}p_klog(p_k)-p_klog(q_k)\textrm{ where }q_k=\frac{1}{c}\]
+\[=\sum_{k}p_klog(p_k)+p_klog(c)\]
+\[=\sum_{k}p_klog(p_k)+log(c)\sum_{k}p_k \textrm{ where  } log(c)\leftarrow\textrm{constant}, \sum_{k}p_k=1\]
+<br>
+\[\max_{p}KL(p||q)=\max_{p}\sum_{k}p_klog(p_k)\]
+\[=\min_{p}-\sum_{k}p_klog(p_k)\]
+\[=\min_{p}H(s) \leftarrow\textrm{Entropy}\]
+<br>
+<u>Entropy over tree</u>:
+\[H(S)=p^LH(S^L)+p^RH(S^R)\]
+\[p^L=\frac{|S^L|}{|S|}, p^R=\frac{|S^R|}{|S|}\]
+
+<h3>ID3-Algorithm</h3>
+<u>Base Cases</u>:
+\[
+\textrm{ID3}(S):\left\{ \begin{array}{ll}
+\textrm{if } \exists \bar{y}\textrm{ s.t. }\forall(x,y)\in S, y=\bar{y}\Rightarrow \textrm{return leaf } \textrm{ with label } \bar{ y}\\
+\textrm{if } \exists\bar{x}\textrm{ s.t. }\forall(x,y)\in S, x=\bar{x}\Rightarrow \textrm{return leaf } \textrm{ with mode}(y:(x,y)\in S)\textrm{ or mean (regression)}\end{array} \right.
+\]
+The Equation above indicates the ID3 algorithm stop under two cases. The first case is that all the data points in a subset of have the same label. If this happens, we should stop splitting the subset and create a leaf with label $y$. The other case is there are no more attributes could be used to split the subset. Then we create a leaf and label it with the most common $y$.
+<br>
+<br>
+Try all features and all possible splits. Pick the split that minimizes impurity $(\textrm{e.g. } s>t)$ where $f\leftarrow$feature and $t\leftarrow$threshold
+<br>
+<u>Recursion</u>:
+\[\textrm{Define: }\begin{bmatrix}
+S^L=\left \{ (x,y)\in S: x_f\leq t \right \}\\ 
+S^R=\left \{ (x,y)\in S: x_f> t \right \}
+\end{bmatrix}\]
+<br>
+<u>Quiz</u>: Why don't we stop if no split can improve impurity?
+<br>
+<u>Example</u>: <b>XOR</b>
+<blockquote>
+    <center>
+    <img src="images/lec17/figure_4.png" />
+  <p>Fig 4: Example XOR</p>
+  </center>
+</blockquote><!-- 
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=0.4\linewidth]{Pictures/c4/figure_4.pdf}
+\caption{Example XOR}
+\end{figure} -->
+
+<ul>
+<li> First split does not improve impurity
+<li> Decision trees are myopic
+</ul>
+
+<h3>Regression Trees</h3>
+<h4>CART: Classification and Regression Trees</h4>
+Assume labels are continuous: $y_i\in\mathbb{R}$
+<br>
+<u>Impurity: Squared Loss</u>
+\[L(S)=\frac{1}{|S|}\sum_{(x,y)\in S}(y-\bar{y}_S)^2 \leftarrow\textrm{Average squared difference from average label}\]
+\[\textrm{where }\bar{y}_S=\frac{1}{|S|}\sum_{(x,y)\in S}y\leftarrow\textrm{Average label}\]
+At leaves, predict $\bar{y}_S$. Finding best split only costs $O(nlogn)$
+<blockquote>
+    <center>
+    <img src="images/lec17/figure_5.png" />
+  <p>Fig: CART </p>
+    </center>
+</blockquote>
+<br>
+
+<u>CART summary</u>:
+<br>
+<ul>
+<li> CART are very light weight classifiers
+<li> Very fast during testing
+<li> Usually not competitive in accuracy but can become very strong through <u>bagging</u> (Random Forests) and <u>boosting</u> (Gradient Boosted Trees)
+</ul>
+
+<blockquote>
+    <center>
+    <img width="80%" src="images/lec17/id3overfit.png" />
+  <p>Fig: ID3-trees are prone to overfitting as the tree depth increases. The left plot shows the learned decision boundary of a binary data set drawn from two Gaussian distributions. The right plot shows the testing and training errors with increasing tree depth.</p>
+    </center>
+</blockquote>
+<br>
+
+</body>

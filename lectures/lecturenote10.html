@@ -1,0 +1,360 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>10: Empirical Risk Minimization</title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>10: Empirical Risk Minimization</h2>
+<div style="float: left">
+<a href="lecturenote09.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote11.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<h3>Recap</h3>
+
+
+
+
+Remember the unconstrained SVM Formulation
+\[
+\min_{\mathbf{w}}\ C\underset{Hinge-Loss}{\underbrace{\sum_{i=1}^{n}\max[1-y_{i}\underset{h({\mathbf{x}_i})}{\underbrace{(w^{\top}{\mathbf{x}_i}+b)}},0]}}+\underset{l_{2}-Regularizer}{\underbrace{\left\Vert w\right\Vert _{z}^{2}}}
+\]
+
+
+The hinge loss is the SVM's error function of choice, whereas
+the $\left.l_{2}\right.$-regularizer reflects the complexity of the
+solution, and penalizes complex solutions.
+
+This is an example of empirical risk minimization with a loss function $
+\ell$ and a regularizer $r$,
+\[
+\min_{\mathbf{w}}\frac{1}{n}\sum_{i=1}^{n}\underset{Loss}{\underbrace{l(h_{\mathbf{w}}({\mathbf{x}_i}),y_{i})}}+\underset{Regularizer}{\underbrace{\lambda r(w)}},
+\]
+where the loss function is a continuous function which penalizes training
+error, and the regularizer is a continuous function which penalizes
+classifier complexity. Here, we define $\lambda$ as $\frac{1}{C}$ from the <a href="lecturenote09.html">previous</a> lecture.<a href="lecturenote10.html#ref1"><sup>[1]</sup></a>
+
+<h3>Commonly Used Binary Classification Loss Functions</h3>
+Different Machine Learning algorithms use different loss functions;
+Table 4.1 shows just a few:
+
+<table border="1" cellpadding="20" >
+<tr><th colspan="6" >Loss $\ell(h_{\mathbf{w}}(\mathbf{x}_i,y_i))$</th><th colspan="6" >Usage</th><th colspan="6" >Comments</th></tr>
+<tr><td colspan="6" ><b>Hinge-Loss</b></br>$\max\left[1-h_{\mathbf{w}}(\mathbf{x}_{i})y_{i},0\right]^{p}$ </td>
+<td colspan="6" ><li>Standard SVM($\left.p=1\right.$)</li><li>(Differentiable) Squared Hingeless SVM ($\left.p=2\right.$)</li></td><td colspan="6" >When used for Standard SVM, the loss function denotes the size of the margin between linear separator and its closest points in either class. Only differentiable everywhere with $\left.p=2\right.$. </td></tr> 
+<tr><td colspan="6" ><b>Log-Loss </b>$\left.\log(1+e^{-h_{\mathbf{w}}(\mathbf{x}_{i})y_{i}})\right.$</td><td colspan="6" >Logistic Regression </td><td colspan="6" >One of the most popular loss functions in Machine Learning, since its outputs are well-calibrated probabilities.</td></tr> 
+<tr><td colspan="6" ><b>Exponential Loss</b> $\left. e^{-h_{\mathbf{w}}(\mathbf{x}_{i})y_{i}}\right.$</td><td colspan="6" >AdaBoost </td><td colspan="6" >This function is very aggressive. The loss of a mis-prediction increases <i>exponentially</i> with the value of $-h_{\mathbf{w}}(\mathbf{x}_i)y_i$. This can lead to nice convergence results,  for example in the case of Adaboost,  but it can also cause problems with noisy data. </td></tr> 
+<tr><td colspan="6" ><b>Zero-One Loss</b> $\left.\delta(\textrm{sign}(h_{\mathbf{w}}(\mathbf{x}_{i}))\neq y_{i})\right.$</td><td colspan="6" > Actual Classification Loss </td><td colspan="6" >Non-continuous and thus impractical to optimize.</td></tr> 
+</table>
+<p><cite><center>Table 4.1: Loss Functions With Classification $\left.y\in\{-1,+1\}\right.$</center></cite></p>
+<u>Quiz:</u> What do all these loss functions look like with
+respect to $\left.z=yh(\mathbf{x})\right.$?
+
+<blockquote>
+    <center>
+    <img src="pngPic/c4/classificationlosses.png" width="400px" />
+	<p>Figure 4.1: Plots of Common Classification Loss Functions - x-axis: $\left.h(\mathbf{x}_{i})y_{i}\right.$, or
+ "correctness" of prediction; y-axis: loss value</p>
+    </center>
+</blockquote>
+
+Some questions about the loss functions:
+<ol>
+<li> Which functions are strict upper bounds on the 0/1-loss?</li>
+<li> What can you say about the hinge-loss and the log-loss as $\left.z\rightarrow-\infty\right.$?</li>
+</li>
+
+<!--
+Some additional notes on loss functions:
+<li> 1. As hinge-loss decreases, so does the training error.</li>
+<li> 2. As $\left.z\rightarrow-\infty\right.$, the log-loss and the hinge loss become increasingly parallel.</li>
+<li> 3. The exponential loss and the hinge loss are both upper bounds of the zero-one loss. (For the exponential loss, this is an important aspect in Adaboost, which we will cover later.)</li>
+<li> 4. Zero-one loss is zero when the prediction is correct, and one when incorrect.</li>
+-->
+
+
+<h3>Commonly Used Regression Loss Functions</h3>
+Regression algorithms (where a prediction can lie 
+anywhere on the real-number line) also have their own host of loss functions:
+<table border="1" cellpadding="20" >
+	<tr><th colspan="6" >Loss $\ell(h_{\mathbf{w}}(\mathbf{x}_i,y_i))$</th><th colspan="6" >Comments</th></tr>
+	<tr>
+		<td colspan="6" >
+			<b>Squared Loss</b> $\left.(h(\mathbf{x}_{i})-y_{i})^{2}\right.$
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li> Most popular regression loss function </li>
+			<li> Estimates <u>Mean</u> Label </li>
+			<li> ADVANTAGE: Differentiable everywhere </li>
+			<li> DISADVANTAGE: Somewhat sensitive to outliers/noise </li>
+			<li> Also known as Ordinary Least Squares (OLS) </li>
+			</ul>
+		</td>
+	</tr> 
+	<tr>
+		<td colspan="6" >
+			<b>Absolute Loss</b> $\left.|h(\mathbf{x}_{i})-y_{i}|\right.$
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li> Also a very popular loss function </li>
+			<li> Estimates <u>Median</u> Label </li>
+			<li> ADVANTAGE: Less sensitive to noise </li>
+			<li> DISADVANTAGE: Not differentiable at $0$ </li>
+			</ul>
+		</td>
+	</tr> 
+	<tr>
+		<td colspan="6" >
+			<b>Huber Loss </b>
+			<ul>
+			<li> $\left.\frac{1}{2}\left(h(\mathbf{x}_{i})-y_{i}\right)^{2}\right.$ if $|h(\mathbf{x}_{i})-y_{i}|<\delta$,</li>
+			<li> otherwise $\left.\delta(|h(\mathbf{x}_{i})-y_{i}|-\frac{\delta}{2})\right.$ </li>
+			</ul>
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li> Also known as Smooth Absolute Loss </li>
+			<li> ADVANTAGE: "Best of Both Worlds" of <u>Squared</u> and <u>Absolute</u> Loss </li>
+			<li> Once-differentiable </li>
+			<li> Takes on behavior of Squared-Loss when loss is small, and Absolute Loss when loss is large. </li>
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="6" >
+			<b>Log-Cosh</b> Loss $\left.log(cosh(h(\mathbf{x}_{i})-y_{i}))\right.$, $\left.cosh(x)=\frac{e^{x}+e^{-x}}{2}\right.$
+		</td>
+		<td colspan="6" >
+			</br>
+			ADVANTAGE: Similar to Huber Loss, but twice differentiable everywhere
+		</td>
+	</tr>
+</table>
+<p><cite><center>Table 4.2: Loss Functions With Regression, i.e. $\left.y\in\mathbb{R}\right.$</center></cite></p>
+
+<u>Quiz:</u> What do the loss functions in Table 4.2 look like with
+respect to $\left.z=h(\mathbf{x}_{i})-y_{i}\right.$?
+
+<blockquote>
+    <center>
+    <img src="pngPic/c4/regressionlosses.png" width="400px" />
+    </center>
+      <p><cite><center>Figure 4.2: Plots of Common Regression Loss Functions - x-axis: $\left.h(\mathbf{x}_{i})y_{i}\right.$, or
+ "error" of prediction; y-axis: loss value
+      </center></cite></p>
+</blockquote>
+
+
+
+<h3>Regularizers</h3>
+
+When  we look at regularizers it helps to change the formulation of the optimization problem to obtain a better geometric intuition:
+
+\begin{equation}
+\min_{\mathbf{w},b} \sum_{i=1}^n\ell(h_\mathbf{w}(\mathbf{x}),y_i)+\lambda r(\mathbf{w}) 
+\Leftrightarrow 
+\min_{\mathbf{w},b} \sum_{i=1}^n\ell(h_\mathbf{w}(\mathbf{x}),y_i) \textrm { subject to: } r(\mathbf{w})\leq B
+\end{equation}
+
+For each $\left.\lambda\geq0\right.$, there exists $\left.B\geq0\right.$ such that the two formulations in (4.1) are equivalent, and vice versa. In previous sections, $\left.l_{2}\right.$-regularizer has been introduced as the component in SVM that reflects the complexity of solutions. Besides the $\left.l_{2}\right.$-regularizer, other types of useful regularizers and their properties are listed in Table 4.3. 
+<table border="1" cellpadding="20" >
+	<tr><th colspan="6" >Regularizer $r(\mathbf{w})$</th><th colspan="6" >Properties</th></tr>
+	<tr>
+		<td colspan="6" >
+			<b>$l_{2}$-Regularization </b>
+			</br>
+			$\left.r(\mathbf{w}) = \mathbf{w}^{\top}\mathbf{w} = \|{\mathbf{w}}\|_{2}^{2}\right.$
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li> ADVANTAGE: Strictly Convex</li>
+			<li> ADVANTAGE: Differentiable</li>
+			<li> DISADVANTAGE: Uses weights on all features, i.e. relies on all features to some degree (ideally we would like to avoid this) - these are known as <u>Dense Solutions</u>.
+			</li>
+			</ul>
+		</td>
+	</tr> 
+	<tr>
+		<td colspan="6" >
+			<b>$l_{1}$-Regularization</b> $\left.r(\mathbf{w}) = \|\mathbf{w}\|_{1}\right.$
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li> Convex (but not strictly)</li>
+			<li> DISADVANTAGE: Not differentiable at $0$ (the point which minimization is intended to bring us to</li>
+			<li> Effect: <u>Sparse</u> (i.e. not <u>Dense</u>) Solutions</li></ul>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="6" >
+			<b>Elastic Net</b> $\left.\alpha\|\mathbf{w}\|_{1}+(1-\alpha)\|{\mathbf{w}}\|_{2}^{2}\right.$
+			$\left.\alpha\in[0, 1)\right.$
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li> ADVANTAGE: Strictly convex (i.e. unique solution)</li>
+			<li> DISADVANTAGE: Non-differentiable</li>
+			</ul>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="6" >
+			<b>$l_p$-Norm</b> 
+			$\left.\|{\mathbf{w}}\|_{p} = (\sum\limits_{i=1}^d v_{i}^{p})^{1/p}\right.$
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li>(often $\left.0&#60;p\leq1\right.$)</li>
+			<li> DISADVANTAGE: Non-convex </li>
+			<li> ADVANTAGE: Very sparse solutions</li>
+			<li> Initialization dependent</li>
+			<li> DISADVANTAGE: Not differentiable</li>
+			</ul>
+		</td>
+	</tr>
+</table>
+<p><cite><center>Table 4.3: Types of Regularizers</center></cite></p>
+
+<blockquote>
+    <center>
+    <img src="pngPic/c4/regularizers.jpg" width="600px" />
+    </center>
+      <p><cite><center>Figure 4.3: Plots of Common Regularizers
+      </center></cite></p>
+</blockquote>
+
+<h3>Famous Special Cases</h3>
+This section includes several special cases that deal with risk minimization, such as Ordinary Least Squares, Ridge Regression, Lasso, and Logistic Regression. Table 4.4 provides information on their loss functions, regularizers, as well as solutions.
+
+<table border="1" cellpadding="20" >
+	<tr><th colspan="6" >Loss and Regularizer</th>
+<!--	<th colspan="6" >Classification</th>-->
+	<th colspan="6" >Comments</th></tr>
+	<tr>
+		<td colspan="6" >
+<b>			Ordinary Least Squares </b>
+			$\min_{\mathbf{w}} \frac{1}{n}\sum\limits_{i=1}^n (\mathbf{w}^{\top}x_{i}-y_{i})^{2}$
+		</td>
+		<td colspan="6" >
+			</br>
+			<ul>
+			<li> Squared Loss</li>
+			<li> No Regularization</li>
+			<li> Closed form solution:</li>
+			<li> $\left.\mathbf{w}=(\mathbf{X}\mathbf{X}^\top)^{-1}\mathbf{X}\mathbf{y}^{\top}\right.$</li>
+			<li> $\left.\mathbf{X}=[\mathbf{x}_{1}, ..., \mathbf{x}_{n}]\right.$</li>
+			<li> $\left.\mathbf{y}=[y_{1},...,y_{n}]\right.$</li>
+			</ul>
+		</td>
+	</tr> 
+	<tr>
+		<td colspan="6" >
+<b>			Ridge Regression </b>
+			$\min_{\mathbf{w}} \frac{1}{n}\sum\limits_{i=1}^n (\mathbf{w}^{\top}x_{i}-y_{i})^{2}+\lambda\|{w}\|_{2}^{2}$
+		</td>
+		<td colspan="6" >
+			<ul>
+			<li> Squared Loss</li>
+			<li> $l_{2}$-Regularization</li>			
+			<li> $\left.\mathbf{w}=(\mathbf{X}\mathbf{X}^{\top}+\lambda\mathbb{I})^{-1}\mathbf{X}\mathbf{y}^{\top}\right.$ </li>
+			</ul>
+		</td>
+	</tr> 
+	<tr>
+		<td colspan="6" >
+<b>			Lasso </b>
+			$\min_{\mathbf{w}} \frac{1}{n}\sum\limits_{i=1}^n (\mathbf{w}^{\top}\mathbf{x}_{i}-{y}_{i})^{2}+\lambda\|\mathbf{w}\|_{1}$
+		</td>
+		<td colspan="6" >
+			<ul>
+			<li>+ sparsity inducing (good for feature selection)</li>
+			<li>+ Convex </li>
+			<li>- Not strictly convex (no unique solution)</li>
+			<li>- Not differentiable (at 0)</li>
+			<li> Solve with (sub)-gradient descent or <a href="http://www.cs.cornell.edu/~kilian/papers/aaai15_sven.pdf">SVEN</a></li>
+			</ul>
+		</td>
+	</tr> 
+	<tr>
+		<td colspan="6" >
+<b>			Logistic Regression </b>
+			$\min_{\mathbf{w},b} \frac{1}{n}\sum\limits_{i=1}^n \log{(1+e^{-y_i(\mathbf{w}^{\top}\mathbf{x}_{i}+b)})}$
+		</td>
+		<td colspan="5" >
+			<ul>
+			<li>Often $l_{1}$ or $l_{2}$ Regularized</li>
+			<li> Solve with gradient descent.</li>
+			<li> $\left.\Pr{(y|x)}=\frac{1}{1+e^{-y(\mathbf{w}^{\top}x+b)}}\right.$</li>
+			</ul>
+		</td>
+	<tr>
+		<td colspan="6" >
+<b>			Linear Support Vector Machine </b>
+			 $\min_{\mathbf{w},b} C\sum\limits_{i=1}^n \max[1-y_{i}\mathbf{w}^\top{\mathbf{x}_i})]+\|\mathbf{w}\|_2^2$
+		</td>
+		<td colspan="5" >
+			<ul>
+			<li>			Typically $l_1$ regularized (sometimes $l_1$). </li>
+			<li> Quadratic program. </li>
+			<li> When <a href="lecturenote14.html">kernelized</a> leads to <b> sparse</b> solutions. </li>
+			<li> Kernelized version can be solved very efficiently with specialized algorithms (e.g. <a href="https://en.wikipedia.org/wiki/Sequential_minimal_optimization">SMO</a>)</li>
+			</ul>
+		</td>
+	</tr> 
+</table>
+<p><cite><center>Table 4.4: Special Cases</center></cite></p>
+
+Some additional notes on the Special Cases:
+<ol>
+<li>Ridge Regression is very fast if data isn't too high dimensional.</li>
+<li>Ridge Regression is just 1 line of Julia / Python.</li>
+<li>There is an interesting connection between Ordinary Least Squares and the first principal component of  PCA (Principal Component Analysis). PCA also minimizes square loss, but looks at perpendicular loss (the horizontal distance between each point and the regression line) instead.</li>
+</ul>
+
+</br>
+<h3></h3>
+<div id="ref1">[1] In Bayesian Machine Learning, it is possible to optimize $\lambda$,
+but for the purposes of this class, it is assumed to be fixed.
+</div>
+
+</body>
+</html>

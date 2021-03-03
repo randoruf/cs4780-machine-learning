@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX","input/MathML","output/SVG", "output/CommonHTML"],
+  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js", "CHTML-preview.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
+  },
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>18: Bagging </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>18: Bagging </h2>
+<div style="float: left">
+<a href="lecturenote17.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote19.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<br>
+<br>
+
+
+Also known as Bootstrap Aggregating (Breiman 96). Bagging is an <b>ensemble</b> method. 
+
+
+<h3>Bagging Reduces Variance</h3>
+
+Remember the Bias / Variance decomposition:
+\begin{equation*}
+    \underbrace{\mathbb{E}[(h_D(x) - y)^2]}_\mathrm{Error} = \underbrace{\mathbb{E}[(h_D(x)-\bar{h}(x))^2]}_\mathrm{Variance} + \underbrace{\mathbb{E}[(\bar{h}(x)-\bar{y}(x))^2]}_\mathrm{Bias} + \underbrace{\mathbb{E}[(\bar{y}(x)-y(x))^2]}_\mathrm{Noise}
+\end{equation*}
+
+Our goal is to reduce the variance term: $\mathbb{E}[(h_D(x)-\bar{h}(x))^2]$.
+<br>
+For this, we want $h_D \to \bar{h}$.
+<br>
+<h4>Weak law of large numbers</h4> The weak law of large numbers says (roughly) for i.i.d. random variables $x_i$ with mean $\mu$, we have,
+\[
+\frac{1}{m}\sum_{i = 1}^{m}x_i \rightarrow \bar{x} \textrm{ as }  m\rightarrow \infty
+\] 
+<br>
+Apply this to classifiers: Assume we have m training sets $D_1, D_2, ..., D_n$ drawn from $P^n$. Train a classifier on each one and average result: 
+
+$$\hat{h} = \frac{1}{m}\sum_{i = 1}^m h_{D_i} \to \bar{h} \qquad as\  m \to \infty$$
+We refer to such an average of multiple classifiers as an <b>ensemble</b> of classifiers. 
+<br>
+<u>Good news:</u> If $\hat{h}\rightarrow \bar{h}$ the variance component of the error must also becomes zero, <i>i.e.</i> 
+$\mathbb{E}[(h_D(x)-\bar{h}(x))^2]\rightarrow 0$
+<br>
+<h5>Problem</h5>We don't have $m$ data sets $D_1, ...., D_m $, we only have D.
+
+<h4>Solution: Bagging (Bootstrap Aggregating)</h4> Simulate drawing from P by drawing uniformly with replacement from the set D.
+<br>
+i.e. let $Q((\mathbf{x_i}, y_i)) = \frac{1}{n} \qquad\forall (\mathbf{x_i}, y_i)\in D$
+<br>
+Draw $D_i~Q^n$, i.e. $|D_i| =n$, and $D_i$ is picked <u>with replacement</u>
+<br>
+
+<b>Q</b>: What is $\mathbb{E}[|D\cap D_i|]$? 
+<br>
+Bagged classifier: $\hat{h}_D = \frac{1}{m}\sum_{i = 1}^{m}h_{D_i}$
+<br>
+Notice: $\hat{h}_D = \frac{1}{m}\sum_{i = 1}^{m}h_{D_i}\nrightarrow \bar{h}$(cannot use W.L.L.N here, W.L.L.N only works for i.i.d). However, in practice bagging still reduces variance very effectively. 
+<br>
+
+<h5>Analysis</h5>
+Although we cannot prove that the new samples are i.i.d., we can show that they are drawn from the original distribution $P$. 
+Assume P is discrete, with $P(X=x_i) = p_i$ over some set  $\Omega = {x_1, ... x_N}$     (N very large)
+(let's ignore the label for now for simplicity)
+<br>
+\begin{equation*}
+\begin{aligned}
+    Q(X=x_i)&= \underbrace{{\sum_{k = 1}^{n}}{n\choose k}p_i^k(1-p_i)^{n-k}}_{\substack{\text{Probability that are}\\\text{k copies of $x_i$ in D}}} \underbrace{\frac{k}{n}}_\mathrm{\substack{\text{Probability}\\\text{pick one of}\\\text{these copies}}}\\
+    &=\frac{1}{n}\underbrace{{\sum_{k = 1}^{n}}{n\choose k}p_i^k(1-p_i)^{n-k}k}_{\substack{\text{Expected value of}\\\text{Binomial Distribution}\\\text{with parameter $p_i$}\\\mathbb{E}[\mathbb{B}(p_i,n)]=np_i}}\\
+    &=\frac{1}{n}np_i\\
+    &=p_i\leftarrow\underline{TATAAA}\text{!! Each data set $D'_l$ is drawn from P, but not independently.}
+    \end{aligned}
+\end{equation*}
+
+
+<h5>Bagging summarized</h5>
+<ol>
+<li> Sample $m$ data sets $D_1,\dots,D_m$ from $D$ with replacement. </li>
+<li> For each $D_j$ train a classifier $h_j()$ </li>
+<li> The final classifier is $h(\mathbf{x})=\frac{1}{m}\sum_{j=1}^m h_j(\mathbf{x})$. 
+</ol>
+In practice larger $m$  results in a better ensemble,  however at some point you will obtain diminishing returns. Note that setting $m$ unnecessarily  high will only slow down your classifier  but will <b>not</b> increase  the error of your classifier. 
+
+<h3>Advantages of Bagging</h3>
+
+<ul>
+<li> Easy to implement
+<li> Works well with many (high variance) classifiers
+<li> Provides an <u>unbiased</u> estimate of the test error, which we refer to as the <i>out-of-bag error</i>.  For each training point $(\mathbf{x}_i,y_i)\in D$  compute the out-of-bag error as the average error obtained on this training point from all the classifiers that were trained <b>without</b> it. 
+<br>
+For $(\mathbf{x}_i, y_i) \in D$, let 
+\begin{align}
+z_i&=\sum_{\substack{D_j\\(\mathbf{x}_i, y_i) \notin D_j}}\mathbf{1} \leftarrow \text{number of data sets w/o $(\mathbf{x}_i, y_i)$}\\
+\epsilon_\mathrm{OOB}&=\sum_{(\mathbf{x}_1, y_1) \in D_j}\frac{1}{z_i}\sum_{\substack{D_l\\(\mathbf{x}_i, y_i) \notin D_l}}l(h_{D_l}(\mathbf{x_i}),y_i)
+\end{align}
+<li>  From the predictions of the individual classifiers in the bag we can estimate the variance of our ensemble.  This can be very helpful to estimate the uncertainty with which the classifier makes a prediction.  For example, if each one of the $m$  classifiers agrees on the label the ensemble is very certain. On the other hand, is only $51\%$  agree on the label but the other $49\%$  disagree, the classifier would be very uncertain. 
+</ul>
+
+<h3>Random Forest</h3>
+One of the most famous and useful bagged algorithms is the <b>Random Forest</b>! A Random Forest is essentially nothing else but bagged decision trees,  with a slightly modified splitting criteria. 
+The algorithm works as follows:<br>
+<ol>
+<li> Sample $m$ data sets $D_1,\dots,D_m$ from $D$ with replacement. </li>
+<li> For each $D_j$ train a full decision tree $h_j()$ (max-depth=$\infty$)  with one small modification:  before each split randomly subsample $k\leq d$  features (without replacement) and only consider these for your split. (This further increases the variance of the trees.) </li>
+<li> The final classifier is $h(\mathbf{x})=\frac{1}{m}\sum_{j=1}^m h_j(\mathbf{x})$. 
+</ol>
+
+<br>
+The Random Forest is  one of the best, most popular and easiest to use out-of-the-box classifier. 
+There are two reasons for this:
+<ul>
+<li> The RF only has two hyper-parameters, $m$ and $k$. It is extremely <i>insensitive</i> to both of these. A good choice for $k$ is $k=\sqrt{d}$ (where $d$ denotes the number of features). You can set $m$  as large as you can afford. </li>
+<li> Decision trees  do not require a lot of preprocessing. For example, the features can be of different scale, magnitude, or slope. This can be highly advantageous in scenarios with heterogeneous data, for example the medical settings where features could be things like <i> blood pressure</i>,<i> age</i>,<i> gender</i>, ...,  each of which is recorded in completely different units. 
+
+
+</body>

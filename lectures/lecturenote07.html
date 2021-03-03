@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 7: Gradient Descent (and Beyond) </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2> Gradient Descent (and Beyond)</h2>
+<div style="float: left">
+<a href="lecturenote06.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote08.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<br>
+<br>
+
+<br/><br/>
+We want to minimize a <u>convex</u>, <u>continuous</u> and <u>differentiable</u> loss function $\ell(w)$.
+<br/><br/>
+In this section we discuss two of the most popular "hill-climbing" algorithms, gradient descent and Newton's method. 
+<br/><br/>
+
+<strong><u>Algorithm:</u></strong><br/>
+Initialize $\vec{w}_0$
+<br/>
+Repeat until converge:
+<br/>
+$\vec{w}^{t+1}$ = $\vec{w}^t$ + $\vec{s}$
+<br/>
+If $\|\vec{w}^{t+1}$ - $\vec{w}^t\|_2$ < $\epsilon$, <u>converged</u>!
+<br/><br/>
+
+
+<h3>Trick: Taylor Expansion</h3>
+</br> </br>
+
+How can you minimize a function $\ell$ if you don't know much about it? The trick is to assume it is much simpler than it really is. This can be done with Taylor's approximation. Provided that the norm $\|\vec{s}\|_2$is small (<em>i.e.</em> $\vec{w}$ + $\vec{s}$ is very close to $\vec{w}$), we can approximate the function $\ell(\vec{w} + \vec{s})$ by its first and second derivatives: 
+<br/><br/>
+<center>
+$\ell(\vec{w} + \vec{s})$ $\approx$ $\ell(\vec{w})$ + $g(\vec{w})$ $^\top$ $\vec{s}$
+<br/><br/>
+$\ell(\vec{w} + \vec{s})$ $\approx$ $\ell(\vec{w})$ + $g(\vec{w})$ $^\top$ $\vec{s}$ + $\frac{1}{2}$$\vec{s}^\top H(\vec{w})\vec{s}$
+</center>
+<br/><br/>
+Here, $g(\vec{w})=\nabla\ell(\vec{w})$ is the gradient and  $H(\vec{w})=\nabla^{2}\ell(\vec{w})$ is the Hessian of $\ell$. Both approximations are valid if $\|\vec{s}\|_2$ is small, but the second one assumes that $\ell$ is <u>twice</u> differentiable and is more expensive to compute but also more accurate than only using gradient. 
+<br/><br/>
+
+<h3>Gradient Descent: Use the first order approximation</h3>
+<br/>
+
+
+In gradient descent we only use the gradient (first order). In other words, we assume that the function $\ell$ around $\vec{w}$ is linear and behaves like  $\ell(\vec{w}) + g(\vec{w})^\top\vec{s}$. Our goal is to find a vector $\vec{s}$ that minimizes this function. In steepest descent we simply set 
+<br/><br/>
+<center>
+  $\vec{s}$ = -$\alpha$ $g(\vec{w})$,
+</center>
+<br/><br/>
+
+for some small $\alpha$>0. It is straight-forward to prove that in this case $\ell(\vec{w}+\vec{s})<\ell(\vec{w})$. 
+
+<br/><br/>
+<center>
+$\underset{after\ one\ update}{\underbrace{\ell(\vec{w} + (-\alpha\vec g(\vec{w}))}} \approx \ell(\vec{w}) - \underset{>0}{\underbrace{\alpha\overset{>0}{\overbrace{\vec g(\vec{w})^T\vec g(\vec{w})}}}} < \underset{before}{\underbrace{\ell(\vec{w})}}$
+</center>
+<br/><br/>
+<center>
+<img src="images/gradient_descent/figure1.png" width="500px" />
+</center>
+<br/><br/>Setting the <strong>learning rate</strong> $\alpha$>0 is a dark art. Only if it is sufficiently small will gradient descent converge (see the first figure below). If it is too large the algorithm can easily <em>diverge</em> out of control (see the second figure below). A safe (but sometimes slow) choice is to set $\alpha$= $\frac{1}{t}$, which guarantees that it will eventually become small enough to converge (for any initial value $t_0$>0). 
+
+
+
+<center><img src="images/gradient_descent/figure2.png" width="500px" /></center>
+<center><img src="images/gradient_descent/figure3.png" width="500px" /></center>
+
+<h3>Adagrad</h3>
+
+One option is to set the step-size adaptively for <i>every feature</i>. <a href="http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf">Adagrad</a> keeps a running average of the squared gradient magnitude and sets a small learning rate for features that have large gradients, and a large learning rate for features with small gradients. Setting different learning rates for different features is particularly important if they are of different scale or vary in frequency. For example, word counts can differ a lot across common words and rare words. 
+
+<br>
+<strong><u>Adagrad Algorithm:</u></strong><br/>
+Initialize $\vec w_0$ and $\vec z$: $\forall d$: $w^0_d=0$ and $z_d=0$ 
+<br/>
+Repeat until converge:
+<br/>
+$\vec{g}=\frac{\partial f(\vec{w})}{\partial \vec{w}}$    # Compute gradient<br>
+$\forall d$: $z_{d}\leftarrow z_{d}+g_{d}^2$<br>
+$\forall d$: ${w}_d^{t+1}\leftarrow {w}_d^t-\alpha \frac{{g}_d}{\sqrt{{z}_d+\epsilon}}$<br>
+<br/>
+If $\|\vec{w}^{t+1}$ - $\vec{w}^t\|_2$ < $\delta$, <u>converged</u>!  # for some small $\delta>0$. 
+
+
+
+<br/><br/>
+
+<h3>Newton's Method: Use 2nd order Approximation</h3>
+<br/><br/>
+
+Newton's method assumes that the loss $\ell$ is <u>twice differentiable</u> and uses the approximation with Hessian (2nd order Taylor approximation). 
+The <strong>Hessian Matrix</strong> contains all second order partial derivatives and is defined as
+<center><img src="images/gradient_descent/figure4.png" width="400px" /></center>
+
+and, because the convexity of $\ell$, it is always a symmetric square matrix and positive semi-definite. 
+<br/><br/>
+<u>Note</u>: A symmetric matrix $\mathbf{M}$ is positive semi-definite if it has only non-negative eigenvalues or, equivalently, for any vector $\vec{x}$ we must have $\vec{x}^\top\mathbf{M}\vec{x}\geq 0$. 
+<br/><br/>
+It follows that the approximation 
+<br/><br/>
+<center>
+$\ell(\vec{w} + \vec{s})$ $\approx$ $\ell(\vec{w})$ + $g(\vec{w})$ $^\top$ $\vec{s}$ + $\frac{1}{2}$$\vec{s}^\top H(\vec{w})\vec{s}$ 
+</center>
+<br/>
+describes a convex parabola, and we can find its minimum by solving the following optimization problem: <br/><br/>
+<center>$\underset{s}{argmin}$  $\ell(\vec{w})$ + $g(\vec{w})$ $^\top$ $\vec{s}$ + $\frac{1}{2}$$\vec{s}^\top H(\vec{w})\vec{s}$</center>
+<br/>
+To find the minimum of the objective, we take its first derivative and equate it with zero and solve for $\vec{s}$,
+<br/><br/>
+<center>
+0 = $g(\vec{w}) + H(\vec{w})\vec{s}$
+<br/><br/>
+$\Rightarrow$$\vec{s}$= $-[H(\vec{w})]^{-1}g(\vec{w})$. 
+<br/><br/>
+</center>
+This choice of $\vec{s}$ converges extremely fast if the approximation is sufficiently accurate. Otherwise it can diverge. This is typically the case if the function is flat or almost flat with respect to some dimension. In that case the second derivatives are close to zero, and their inverse becomes very large - resulting in gigantic steps. 
+
+<h3>Best practices</h3>
+
+1. The matrix $H(\vec{w})$ scales $d\times d$ and is expensive to compute. A good approximation can be to only compute its diagonal entries.
+<br/><br/>
+2. To avoid divergence of Newton's method, a good approach is to start with gradient descent (or even stochastic gradient descent) and then finish the optimization Newton's method. Typically, the second order approximation, used by Newton's Method, is more likely to be appropriate near the optimum. 
+<br/><br/><br/>
+
+
+
+
+<center><img src="images/gradient_descent/gradientdescentstepsizes.png" width="600px" /></center>
+Gradient descent with different step-sizes. The left and middle plots show the losses as a function of the number of iterations. The right plot shows the path of the weight vector $\vec{w}^t$ over time. The middle image shows the loss zoomed in around the left bottom corner. In this case the steps-size of $\alpha$=0.5 (blue line left and yellow right) converges the fastest.
+<br/><br/><br/><br/><br/><br/><br/><br/>
+
+<center><img src="images/gradient_descent/gradientvsnewton_convergence.png" width="600px" />
+<h5>Figure 1</h5>
+(a) A starting point where Newton's Method converges in 8 iterations.
+</center>
+
+<center><img src="images/gradient_descent/gradientvsnewton_divergence.png" width="600px" />
+<h5>Figure 2</h5>
+(b) A starting point where Newton's Method diverges.
+</center>
+
+<center><img src="images/gradient_descent/gradientvsnewton_after6gradientsteps.png" width="600px" />
+<h5>Figure 3</h5>
+</center>
+(c) same starting point as in Figure 2, however Newton's method is only used after 6 gradient steps and converges in a few steps.
+<br/><br/>
+
+A comparison of Newton's Method and Gradient Descent. Gradient Descent always converges after over 100 iterations from all initial starting points. If it converges (Figure 1), Newton's Method is much faster (convergence after 8 iterations) but it can diverge (Figure 2). Figure 3 shows the hybrid approach of taking 6 gradient descent steps and then switching to Newton's Method. It still converges in only 10 updates.
+
+</body>
+</html>

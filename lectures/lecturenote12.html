@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>13: Bias/Variance and Model Selection</title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2>12: Bias/Variance and Model Selection</h2>
+<div style="float: left">
+<a href="lecturenote11.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote13.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<br><br>
+
+
+<h3>Make Sure Your Model is Optimally Tuned</h3>
+
+Remember ERM
+\[
+\min_{\mathbf{w}}\frac{1}{n}\sum_{i=1}^{n}\underset{Loss}{\underbrace{l_{(s)}(h_{\mathbf{w}}({\mathbf{x}_i}),y_{i})}}+\underset{Regularizer}{\underbrace{\lambda r(w)}}
+\]
+
+How should we set $\lambda$ (regulates the bias/variance)?
+
+<h4>Overfitting and Underfitting</h4>
+There are two equally problematic cases which can arise when learning a classifier on a data set: underfitting and overfitting, each of which relate to the degree to which the data in the training set is extrapolated to apply to unknown data:
+
+<p><b>Underfitting</b>: The classifier learned on the training set is not expressive enough to even account for the data provided. In this case, both the training error and the test error will be high, as the classifier does not account for relevant information present in the training set.</p>
+
+
+<p><b>Overfitting</b>: The classifier learned on the training set is too specific, and cannot be used to accurately infer anything about unseen data. Although training error continues to decrease over time, test error will begin to increase again as the classifier begins to make decisions based on patterns which exist only in the training set and not in the broader distribution.</p>
+
+<blockquote>
+    <center>
+<img src="images/model_selection/13_1.png" width="500px" />
+<p>Figure 1: overfitting and underfitting</p>
+    </center>
+</blockquote>
+
+
+<h4>Identify the Sweet Spot</h4>
+
+<p>Divide data into training and validation portions. Train your algorithm on the "training" split and evaluate it on the "validation" split, for various value of $\lambda$ (Typical values: <i>10</i><sup><i>-5</i></sup> <i>10</i><sup><i>-4</i></sup> <i>10</i><sup><i>-3</i></sup> <i>10</i><sup><i>-2</i></sup> <i>10</i><sup><i>-1</i></sup> <i>10</i><sup><i>0</i></sup> <i>10</i><sup><i>1</i></sup> <i>10</i><sup><i>2</i></sup> ...).</p>
+
+
+<b><a href="https://en.wikipedia.org/wiki/Cross-validation_(statistics)">k-fold cross validation</a></b>
+<p>Divide your training data into $k$ partitions. Train on $k-1$ of them and leave one out as validation set. Do this $k$ times (i.e. leave out every partition exactly once) and average the validation error across runs. This gives you a good estimate of the validation error (even with standard deviation). In the extreme case, you can have $k=n$, i.e. you only leave a single data point out (this is often referred to as LOOCV- Leave One Out Cross Validation). LOOCV is important if your data set is small and cannot afford to leave out many data points for evaluation . </p>
+
+<b>Telescopic search</b>
+<p>Do two searches: 1st, find the best order of magnitude for $\lambda$; 2nd, do a more fine-grained search around the best $\lambda$ found so far. For example, first you try $\lambda=0.01,0.1,1,10,100$. It turns out 10 is the best performing value. Then you try out $\lambda=5,10,15,20,25,...,95$ to test values "around" $10$. </p>
+
+
+<h4>Early Stopping</h4>
+<p>Stop your optimization after M (>= 0) number of gradient steps, even if optimization has not converged yet.</p>
+
+<blockquote>
+    <center>
+<img src="images/model_selection/13_2.png" width="500px" />
+<p>Figure 2: Early stopping</p>
+    </center>
+</blockquote>
+
+<p>What if even your "sweet spot" validation error is still too high?</p>
+
+<h3>Detecting High Bias and High Variance</h3>
+
+If a classifier is under-performing (e.g. if the test or training error is too high), there are several ways to improve performance. To find out which of these many techniques is the right one for the situation, the first step is to determine the root of the problem.
+
+<blockquote>
+    <center>
+<img src="images/model_selection/1.png" width="500px" />
+<p>Figure 3: Test and training error as the number of training instances increases.
+</p>
+    </center>
+</blockquote>
+
+The graph above plots the training error and the test error and can be divided into two overarching regimes. In the first regime (on the left side of the graph), training error is below the desired error threshold (denoted by $\epsilon$), but test error is significantly higher. In the second regime (on the right side of the graph), test error is remarkably close to training error, but both are above the desired tolerance of $\epsilon$.
+
+<h4>Regime 1 (High Variance)</h4>
+
+<p>In the first regime, the cause of the poor performance is high variance.</p>
+
+<p><b>Symptoms</b>:
+<ol>
+<li>Training error is much lower than test error</li>
+<li>Training error is lower than $\epsilon$</li>
+<li>Test error is above $\epsilon$</li>
+</ol></p>
+
+<p><b>Remedies</b>:
+<ul>
+<li>Add more training data</li>
+<li>Reduce model complexity -- complex models are prone to high variance</li>
+<li>Bagging (will be covered later in the course)</li>
+</ul></p>
+
+
+
+<h4>Regime 2 (High Bias)</h4>
+
+Unlike the first regime, the second regime indicates high bias: the model being used is not robust enough to produce an accurate prediction. 
+
+<p><b>Symptoms</b>:
+<ol>
+<li>Training error is higher than $\epsilon$</li>
+</ol></p>
+
+<p><b>Remedies</b>:
+<ul>
+<li>Use more complex model (e.g. kernelize, use non-linear models)</li>
+<li>Add features</li>
+<li>Boosting (will be covered later in the course)</li>
+</ul></p>
+
+
+
+</body>

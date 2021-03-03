@@ -1,0 +1,233 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+   <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX","input/MathML","output/SVG", "output/CommonHTML"],
+  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js", "CHTML-preview.js"],
+  TeX: {
+    extensions: ["AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
+  },
+    tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 14: Kernels continued</title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2> Lecture 14: Kernels continued</h2>
+<div style="float: left">
+<a href="lecturenote13.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote15.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<br><br>
+
+<h3>Well-defined kernels</h3>
+
+Here are the most common kernels:
+<ul>
+    <li> <i>Linear</i>: $\mathsf{k}(\mathbf{x}, \mathbf{z})=\mathbf{x}^\top\mathbf{z}$
+    <li> <i>RBF</i>: $\mathsf{k}(\mathbf{x},\mathbf{z})=e^{- \frac{(\mathbf{x}-\mathbf{z})^2}{\sigma^2}}$
+    <li> <i>Polynomial</i>: $\mathsf{k}(\mathbf{x}, \mathbf{z})=(1+\mathbf{x}^\top\mathbf{z})^d$
+</ul>
+
+Kernels built by recursively combining one or more of the following rules are 
+called <i>well-defined kernels</i>:
+<ol>
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=\mathbf{x}^\top\mathbf{z}\quad\quad\quad(1)$
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=c\mathsf{k_1}(\mathbf{x},\mathbf{z})\quad\quad(2)$
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=\mathsf{k_1}(\mathbf{x},\mathbf{z})+\mathsf{k_2}(\mathbf{x},\mathbf{z})$
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=g(\mathsf{k}(\mathbf{x},\mathbf{z}))$
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=\mathsf{k_1}(\mathbf{x},\mathbf{z})\mathsf{k_2}(\mathbf{x},\mathbf{z})$
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=f(\mathbf{x})\mathsf{k_1}(\mathbf{x},\mathbf{z})f(\mathbf{z})\quad(3)$
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=e^{\mathsf{k_1}(\mathbf{x},\mathbf{z})}\quad\quad(4)$
+    <li> $\mathsf{k}(\mathbf{x}, \mathbf{z})=\mathbf{x}^\top \mathbf{A} \mathbf{z}$
+</ol>
+where $k_1,k_2$ are well-defined kernels, $c\geq 0$, $g$ is a polynomial function with positive coefficients, $f$ is any function and $\mathbf{A}\succeq 0$ is positive semi-definite.
+
+Kernel being well-defined is equivalent to the corresponding kernel matrix, $K$, being 
+<i>positive semidefinite</i> (not proved here), which is equivalent to 
+any of the following statement:
+<ol>
+    <li> All eigenvalues of $K$ are non-negative.
+    <li> $\exists \text{ real matrix } P \text{ s.t. } K=P^\top P.$
+    <li> $\forall \text{ real vector } \mathbf{x}, \mathbf{x}^\top K \mathbf{x} \ge 0.$
+</ol>
+
+It is trivial to prove that linear kernel and polynomial kernel with integer $d$
+are both well-defined kernel.
+
+
+<div class="theorem">
+The RBF kernel 
+$k_{RBF}=e^{\frac{-(\mathbf{x}-\mathbf{z})^2}{\sigma^2}}$
+is a well-defined kernel matrix.
+</div>
+
+<div class="proof">
+    \[\begin{aligned}
+            \mathsf{k}_1(\mathbf{x},\mathbf{z})&=\mathbf{x}^\top \mathbf{z} \qquad \textrm{well defined by rule (1)}\\
+            \mathsf{k}_2(\mathbf{x},\mathbf{z})&=\frac{2}{\sigma^2}\mathsf{k}_1(\mathbf{x},\mathbf{z})=\frac{2}{\sigma^2}\mathbf{x}^\top \mathbf{z} \qquad \textrm{well defined by rule (2)}\\
+            \mathsf{k}_3(\mathbf{x},\mathbf{z})&=e^{\mathsf{k}_2(\mathbf{x},\mathbf{z})}=e^{\frac{2\mathbf{x}^\top \mathbf{z}}{\sigma^2}} \qquad \textrm{well defined by rule (4)}\\
+            \mathsf{k}_{4}(\mathbf{x},\mathbf{z})&=e^{-\frac{\mathbf{x}^\top\mathbf{x}}{\sigma^2}}
+\mathsf{k}_3(\mathbf{x},\mathbf{z})
+e^{-\frac{\mathbf{z}^\top\mathbf{z}}{\sigma^2}}
+=e^{-\frac{\mathbf{x}^\top\mathbf{x}}{\sigma^2}}
+e^{\frac{2\mathbf{x}^\top \mathbf{z}}{\sigma^2}}
+e^{-\frac{\mathbf{z}^\top\mathbf{z}}{\sigma^2}}
+ \qquad \textrm{well defined by rule (3) with $f(\mathbf{x})= e^{-\frac{\mathbf{x}^\top\mathbf{x}}{\sigma^2}}$}\\
+&=e^{\frac{-\mathbf{x}^\top\mathbf{x}+2\mathbf{x}^\top\mathbf{z}-\mathbf{z}^\top\mathbf{z}}{\sigma^2}}=e^{\frac{-(\mathbf{x}-\mathbf{z})^2}{\sigma^2}}=\mathsf{k}_{RBF}(\mathbf{x},\mathbf{z})
+    \end{aligned}\]    
+</div>
+<br>
+
+<!--<b>Quiz:</b> Prove it. -->
+<br><br>
+You can even define kernels of sets, or strings or molecules. 
+The following kernel is defined on two sets,
+\[\mathsf{k}(S_1,S_2)=e^{|S_1 \cap S_2|}.\]
+It can be shown that this is a well-defined kernel. We can 
+list out all possible samples $\Omega$ and arrange them into a sorted list.
+We define a vector $\mathbf{x} \in \{0,1\}^{|\Omega|}$,
+where each of its element indicates whether a corresponding sample 
+is included in the set. It is easy to prove that 
+\[\mathsf{k}(S_1,S_2)=e^{x_1^\top x_2},\]
+which is a well-defined kernel by rules (1) and (4).
+
+<h3>Kernel Machines</h3>
+An algorithm can be kernelized in 2 steps:
+<ol>
+    <li> Rewrite the algorithm and the classifier entirely in terms of 
+        inner-product, $\mathbf{x}_1^\top \mathbf{x}_2$.
+    <li> Define a kernel function and substitute $\mathsf{k}(\mathbf{x}_i,\mathbf{x}_j)$
+        for $\mathbf{x}_i^\top \mathbf{x}_j$.
+</ol>
+
+<b>Quiz 1</b>: How can you kernelize nearest neighbors (with Euclidean distances)?
+
+
+$D=\{(\mathbf{x}_1,y_1),\ldots,(\mathbf{x}_n,y_n)\}.$ <br>
+Observations: Nearest neighbor under <i>squared</i> Euclidean distance is
+the same as nearest neighbor under Euclidean distance.
+Therefore, out of the original version,<br>
+
+\[ h(\mathbf{x})= y_j \quad \text{where} \quad j=argmin_{(\mathbf{x_j},y_j) \in D}(x-x_j)^2 \]
+
+we can derive the kernel version,
+\[h(\mathbf{x})= y_j \quad \text{where} \quad j=argmin_{(\mathbf{x_j},y_j) \in D} (\mathsf{k}({\mathbf{x}}, {\mathbf{x}})-2\mathsf{k}({\mathbf{x}}, {\mathbf{x}_j})+\mathsf{k}({\mathbf{x}_j}, {\mathbf{x}_j})) \]
+Actually, the kernel nearest neighbor is rarely used in practice,
+because it brings little improvement since the original $k$-NN
+is already highly non-linear.
+
+<h4>Kernel Regression</h4>
+
+Kernel regression is kernelized Ordinary Least Squares Regression (OLS). Vanilla OLS minimizes the following squared loss regression loss function, 
+\begin{equation}
+\min_\mathbf{w} \sum_{i=1}^{n} (\mathbf{w}^\top \mathbf{x}_i -y_i)^2,
+\end{equation}
+to find the hyper-plane $\mathbf{w}$. The prediction at a test-point is simply $h(\mathbf{x})=\mathbf{w}^\top \mathbf{x}$. 
+<br>
+If we let $\mathbf{X}=[\mathbf{x}_1,\ldots,\mathbf{x}_n]$ and $\mathbf{y}=[y_1,\ldots,y_n]^\top$, the solution of OLS can be written in closed form:
+\begin{equation}
+\mathbf{w}=(\mathbf{X}\mathbf{X}^\top)^{-1} \mathbf{X} \mathbf{y}\qquad(5)%\label{eq:kernel:OLS}    
+\end{equation}
+
+<h5>kernelization</h5>
+We begin by expressing the solution $\mathbf{w}$ as a linear combination of the training inputs
+\begin{equation}
+\mathbf{w}=\sum_{i=1}^{n} \alpha_i\mathbf{x}_i=\mathbf{X}\vec{\alpha}. 
+\end{equation}
+You can verify that such a vector $\vec \alpha$ must always exist by observing the gradient updates that occur if (5) is minimized with gradient descent and the initial vector is set to $\mathbf{w}_0=\vec 0$ (because the squared loss is convex the solution is independent of its initialization.)
+
+We now kernelize the algorithm by substituting $k(\mathbf{x},\mathbf{z})$ for any inner-product $\mathbf{x}^\top \mathbf{z}$. 
+It follows that the prediction at a test point becomes 
+\begin{equation}
+h(\mathbf{x})=\mathbf{w}^\top \mathbf{x} = \sum_{i=1}^{n} \alpha_i \mathbf{x}_i^\top\mathbf{x} =\sum_{i=1}^{n} \alpha_i k(\mathbf{x}_i,\mathbf{x})= K_{X:x}\vec{\alpha}. 
+\end{equation}
+It remains to show that we can also solve for the values of $\alpha$ in closed form. As it turns out, this is straight-forward. 
+<div class="theorem">
+Kernelized ordinary least squares has the solution $\vec{\alpha}={\mathbf{K}}^{-1} \mathbf{y}$.
+</div>
+<div class="proof">
+    \[\begin{aligned}
+             \mathbf{X}\vec{\alpha}&=\mathbf{w}= (\mathbf{X}\mathbf{X}^\top)^{-1} \mathbf{X} \mathbf{y}  \ \ \  \textrm{  | multiply from left by $(\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top$} \\
+             (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{X}\vec{\alpha} &= (\mathbf{X}^\top\mathbf{X})^{-1}\underbrace{\mathbf{X}^\top(\mathbf{X}\mathbf{X}^\top)^{-1} \mathbf{X}}_{=\mathbf{I}} \mathbf{y}\\
+            \vec{\alpha}&= (\mathbf{X} ^\top \mathbf{X})^{-1}  \mathbf{y}   | \textrm{ substitute $\mathbf{K}=\mathbf{X}^\top \mathbf{X}$}\\
+             \vec{\alpha}&= \mathbf{K}^{-1} \mathbf{y}  \\
+    \end{aligned}\]
+</div>
+<br>
+Kernel regression can be extended to the kernelized version of <i>ridge regression</i>. The solution then becomes 
+\begin{equation}
+    \vec{\alpha}=(\mathbf{K}+\sigma^2\mathbf{I})^{-1}\mathbf{y}.
+\end{equation}
+In practice a small value of $\sigma^2>0$ increases stability, especially if $\mathbf{K}$ is not invertible. If $\sigma=0$ kernel ridge regression, becomes kernelized ordinary least squares. Typically <i>kernel ridge regression</i> is also referred to as <i>kernel regression</i>.
+
+<h5>Testing</h5>
+<p>
+Remember that we defined $\mathbf{w}=\mathbf{X}\vec{\alpha}.$ The prediction of a test point $\mathbf{z}$ then becomes 
+$$h(\mathbf{z})=\mathbf{z}^\top \mathbf{w}
+=\mathbf{z}^\top\underbrace{\mathbf{X}\vec{\alpha}}_{\mathbf{w}}
+=\mathbf{z}\mathbf{X}\underbrace{(\mathbf{K}+\sigma^2\mathbf{I})^{-1}\mathbf{y}}_{\vec{\alpha}}
+=\underbrace{\mathbf{K}_*}_{\mathbf{z}\mathbf{x}}(\mathbf{K}+\sigma^2\mathbf{I})^{-1}\mathbf{y},$$ where $\mathbf{K}_*$ is the kernel of the test point with the training points, i.e. $[\mathbf{K}_*]_{i}=\phi(\mathbf{z})^\top\phi(\mathbf{x}_i)$, the inner-product between the test point $\mathbf{z}$ with the training point $\mathbf{x}_i$ after the mapping into feature space through $\phi$.
+</p>
+
+<h3>Kernel SVM</h3>
+The original, <b>primal</b> SVM is a quadratic programming problem:
+\[\begin{aligned}
+       &\min_{\mathbf{w},b}\mathbf{w}^\top\mathbf{w}+C \sum_{i=1}^{n} \xi_i \\
+  \text{s.t. }\forall i, &\quad y_i(\mathbf{w}^\top\mathbf{x}_i +b) \geq 1 - \xi_i\\
+             &\quad  \xi_i \geq 0
+\end{aligned}\]
+has the <a href="https://en.wikipedia.org/wiki/Duality_(optimization)"><b>dual</b></a> form
+\[\begin{aligned}
+             &\min_{\alpha_1,\cdots,\alpha_n}\frac{1}{2} \sum_{i,j}\alpha_i \alpha_j y_i y_j K_{ij} - \sum_{i=1}^{n}\alpha_i  \\
+       \text{s.t.}  &\quad 0 \leq \alpha_i \leq C\\
+             &\quad \sum_{i=1}^{n} \alpha_i y_i = 0
+\end{aligned}\]
+<br>
+where $\mathbf{w}=\sum_{i=1}^n \alpha_i y_i\phi(\mathbf{x}_i)$ (although this is never computed) and 
+$h(\mathbf{x})=\textrm{sign}\left(\sum_{i=1}^n \alpha_i y_i k(\mathbf{x}_i,\mathbf{x})+b\right).$
+Almost all $\alpha_i = 0$ (i.e. $\vec \alpha$ is sparse). We refer to those inputs with $\alpha_i>0$ as <b>support vectors</b>. For test-time you only have to store the vectors $\mathbf{x}_i$ and values $\alpha_i$ that correspond to support vectors. 
+It is easy to show $\alpha_i> 0 \leftrightarrow y_i(\mathbf{w}^\top \phi(x_i)+b)=1$. This allows us to solve for $b$ from the support vectors (it is best to average the $b$ from all support vectors, as there may be numerical precision problems). 
+
+<br><br>
+<b>Quiz:</b> What is the dual form of the hard-margin SVM?
+
+<h4>Kernel SVM - the smart nearest neighbor</h4>
+<p>
+ Do you remember the k-nearest neighbor algorithm? For binary classification problems ($y_i\in\{+1,-1\}$), we can write the decision function for a test point $\mathbf{z}$ as
+$$
+ h(\mathbf{z})=\textrm{sign}\left(\sum_{i=1}^n y_i \delta^{nn}(\mathbf{x}_i,\mathbf{z})\right),
+$$
+where $\delta^{nn}(\mathbf{z},\mathbf{x}_i)\in\{0,1\}$ with  $\delta^{nn}(\mathbf{z},\mathbf{x}_i)=1$ only if $\mathbf{x}_i$ is one of the $k$ nearest neighbors of test point $\mathbf{z}$. 
+The SVM decision function 
+$$h(\mathbf{z})=\textrm{sign}\left(\sum_{i=1}^n y_i\alpha_i  k(\mathbf{x}_i,\mathbf{z})+b\right)$$
+is very similar, but instead of limiting the decision to the $k$ nearest neighbors, it considers <i>all</i> training points but the kernel function assigns more weight to those that are closer (large $k(\mathbf{z},\mathbf{x}_i))$. In some sense you can view the RBF kernel as a soft nearest neighbor assignment, as the exponential decay with distance with assign almost no weight to all but the neighboring points of $\mathbf{z}$. 
+The Kernel SVM algorithm also learns a weight $\alpha_i>0$ for each training point and a bias $b$ and it essentially "removes" useless training points by setting many $\alpha_i=0$. 
+</p>
+</body>
+</html>

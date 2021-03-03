@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+    
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 8: Linear Regression </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2 id="linear-regression">Linear Regression</h2>
+<div style="float: left">
+<a href="lecturenote07.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote09.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+
+<p>In this lecture we will learn about Linear Regression.</p>
+
+<h3 id="assumptions">Assumptions</h3>
+
+<b>Data Assumption</b>: $y_{i} \in \mathbb{R}$
+<br/>
+<b>Model Assumption</b>: $y_{i} = \mathbf{w}^\top\mathbf{x}_i + \epsilon_i$ where $\epsilon_i \sim N(0, \sigma^2)$
+<br/>
+$\Rightarrow y_i|\mathbf{x}_i \sim N(\mathbf{w}^\top\mathbf{x}_i, \sigma^2) \Rightarrow P(y_i|\mathbf{x}_i,\mathbf{w})=\frac{1}{\sqrt{2\pi\sigma^2}}e^{-\frac{(\mathbf{x}_i^\top\mathbf{w}-y_i)^2}{2\sigma^2}}$
+
+<h3 id="MLE">Estimating with MLE</h3>
+
+<span class="math display">\[
+\begin{aligned}
+\mathbf{w} &amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} \sum_{i=1}^n log(P(y_i|\mathbf{x}_i,\mathbf{w}))\\
+&amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} \sum_{i=1}^n \left[ log\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right) + log\left(e^{-\frac{(\mathbf{x}_i^\top\mathbf{w}-y_i)^2}{2\sigma^2}}\right)\right]\\
+&amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} -\frac{1}{2\sigma^2}\sum_{i=1}^n (\mathbf{x}_i^\top\mathbf{w}-y_i)^2 \\
+&amp;= \operatorname*{argmin}_{\mathbf{\mathbf{w}}} \frac{1}{n}\sum_{i=1}^n (\mathbf{x}_i^\top\mathbf{w}-y_i)^2 \\
+\end{aligned}
+\]</span>
+<br/>
+<p>The loss is thus $l(\mathbf{w}) = \frac{1}{n}\sum_{i=1}^n (\mathbf{x}_i^\top\mathbf{w}-y_i)^2$ AKA square loss or Ordinary Least Squares (OLS). OLS can be optimized with gradient descent, Newton's method, or in closed form.</p>
+<b>Closed Form:</b> $\mathbf{w} = (\mathbf{X X^\top})^{-1}\mathbf{X}\mathbf{y}^\top$
+
+<h3 id="map-estimate">Estimating with MAP</h3>
+
+<b>Additional Model Assumption</b>: $P(\mathbf{w}) = \frac{1}{\sqrt{2\pi\tau^2}}e^{-\frac{\mathbf{w}^\top\mathbf{w}}{2\tau^2}}$
+<br/>
+<span class="math display">\[
+\begin{align}
+\mathbf{w} &amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} P(\mathbf{w}|y_1,\mathbf{x}_1,...,y_n,\mathbf{x}_n)\\
+&amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} \frac{P(y_1,\mathbf{x}_1,...,y_n,\mathbf{x}_n|\mathbf{w})P(\mathbf{w})}{P(y_1,\mathbf{x}_1,...,y_n,\mathbf{x}_n)}\\
+&amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} P(y_1,...,y_n|\mathbf{x}_1,...,\mathbf{x}_n,\mathbf{w})P(\mathbf{x}_1,...,\mathbf{x}_n|\mathbf{w})P(\mathbf{w})\\
+&amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} \prod_{i=1}^n P(y_i|\mathbf{x}_i,\mathbf{w})P(\mathbf{w})\\
+&amp;= \operatorname*{argmax}_{\mathbf{\mathbf{w}}} \sum_{i=1}^n  \left[ logP(y_i|\mathbf{x}_i,\mathbf{w})+ logP(\mathbf{w})\right]\\
+&amp;= \operatorname*{argmin}_{\mathbf{\mathbf{w}}} \frac{1}{2\sigma^2} \sum_{i=1}^n (\mathbf{x}_i^\top\mathbf{w}-y_i)^2 + \frac{1}{2\tau^2}\mathbf{w}^\top\mathbf{w}\\
+&amp;= \operatorname*{argmin}_{\mathbf{\mathbf{w}}} \frac{1}{n} \sum_{i=1}^n (\mathbf{x}_i^\top\mathbf{w}-y_i)^2 + \lambda|| \mathbf{w}||_2^2 \tag*{$\lambda=\frac{\sigma^2}{n\tau^2}$}\\
+
+\end{align}
+\]</span>
+<br/>
+<p>This formulation is known as Ridge Regression. It has a closed form solution of: $\mathbf{w} = (\mathbf{X X^{\top}}+\lambda^2 \mathbf{I})^{-1}\mathbf{X}\mathbf{y}^\top$</p>
+
+<h3 id="summary">Summary</h3>
+
+<b>Ordinary Least Squares:</b>
+<ul>
+<li>$\operatorname*{min}_{\mathbf{\mathbf{w}}} \frac{1}{n}\sum_{i=1}^n (\mathbf{x}_i^\top\mathbf{w}-y_i)^2$.</li>
+<li>Squared loss.</li>
+<li>No regularization.</li>
+<li>Closed form: $\mathbf{w} = (\mathbf{X X^\top})^{-1}\mathbf{X} \mathbf{y}^\top$.</li>
+</ul>
+<br>
+<b>Ridge Regression:</b>
+<ul>
+<li>$\operatorname*{min}_{\mathbf{\mathbf{w}}} \frac{1}{n}\sum_{i=1}^n (\mathbf{x}_i^\top\mathbf{w}-y_i)^2 + \lambda ||\mathbf{w}||_2^2$.</li>
+<li>Squared loss.</li>
+<li>$l2\text{-regularization}$.</li>
+<li>Closed form: $\mathbf{w} = (\mathbf{X X^{\top}}+\lambda \mathbf{I})^{-1}\mathbf{X} \mathbf{y}^\top$.</li>
+</ul>
+
+</body>
+</html>

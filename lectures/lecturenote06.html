@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<!--
+<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+<script type="text/javascript">
+LatexIT.add('p',true);
+</script>
+-->
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true
+      },
+      "HTML-CSS": { availableFonts: ["TeX"] }
+    });
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js">
+  </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full"></script>
+
+	
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Lecture 6: Logistic Regression </title>
+<link href="lecturecss.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h2 id="logistic-regression">Logistic Regression</h2>
+<div style="float: left">
+<a href="lecturenote05.html">previous</a>
+</div>
+<div style="float: right">
+<a href="lecturenote07.html">next</a>
+</div>
+<div style="margin: 0 auto; width: 100px;"><a href="https://courses.cis.cornell.edu/cs4780/2017sp/">back</a>
+</div>
+<br>
+<br>
+
+<p>In this lecture we will learn about the discriminative counterpart to the Gaussian Naive Bayes (<a href="lecturenote05.html">Naive Bayes</a> for continuous features).</p>
+
+<p>Machine learning algorithms can be (roughly) categorized into two categories: 
+<ul>
+<li><i>Generative</i> algorithms, that estimate $P(\vec x_i,y)$ (often they model $P(\vec x_i|y)$ and $P(y)$ separately).</li>
+<li><i>Discriminative</i> algorithms, that model $P(y|\vec x_i)$</li>
+</ul></p>
+
+<p>The Naive Bayes algorithm is <i>generative</i>. It models $P(\vec x_i|y)$ and makes explicit assumptions on its distribution  (e.g. multinomial, categorical, Gaussian, ...). The parameters of this distributions are estimated with MLE or MAP.  We showed previously that for the Gaussian Naive Bayes <span class="math inline">\(P(y|\vec x_i)=\frac{1}{1+e^{-y(\vec w^T \vec x+b)}}\)</span> for <span class="math inline">\(y\in\{+1,-1\}\)</span> for specific vectors $\vec w$ and $b$ that are uniquely determined through the particular choice of $P(\vec x_i|y)$.  </p>
+
+<p>Logistic Regression is often referred to as the <i>discriminative</i> counterpart of Naive Bayes. Here, we model $P(y|\vec x_i)$ and assume that it takes on exactly this form 
+$$P(y|\vec x_i)=\frac{1}{1+e^{-y(\vec w^T \vec x+b)}}.$$ 
+We make little assumptions on $P(\vec x_i|y)$, e.g. it could be Gaussian or Multinomial. Ultimately it doesn't matter, because we estimate the vector $\vec w$ and $b$ directly with MLE or MAP. </p>
+
+
+<p>For a lot more details, I strongly suggest that you read this excellent <a href="https://www.cs.cmu.edu/~tom/mlbook/NBayesLogReg.pdf">book chapter</a> by Tom Mitchell</p>
+
+
+
+<h3 id="maximum-likelihood-estimate-mle">Maximum likelihood estimate (MLE)</h3>
+<p>In MLE we choose parameters that <b>maximize the conditional likelihood</b>. The conditional data likelihood $P(\vec y \mid X, \vec w)$  is the probability of the observed values $\vec y \in \mathbb R^n$ in the training data conditioned on the feature values <span class="math inline">\(\vec x_i\)</span>. Note that $X=\left[\vec x_1, \dots,\vec x_i, \dots, \vec x_n\right] \in \mathbb R^{d \times n}$. We choose the paramters that maximize this function and we assume that the $y_i$'s are independent given the input features $\vec x_i$ and $\vec w$. So,
+$$
+\begin{aligned}
+P(\vec y \mid X, \vec w) = \prod_{i=1}^n P(y_i \mid \vec x_i, \vec w).
+\end{aligned}$$
+Now, 
+$$\begin{aligned}
+log \bigg(\prod_{i=1}^n P(y_i|\vec x_i,\vec w)\bigg) &amp;= -\sum_{i=1}^n \log(1+e^{-y_i \vec w^T \vec x})\\
+\end{aligned}$$
+Note, that we absorbed the parameter $b$ into $\vec w$ through an additional constant dimension (similar to the <a href="lecturenote03.html">Perceptron</a>).
+
+$$\begin{aligned}
+\hat{\vec{w}}_{MLE} &amp;= \operatorname*{argmax}_{\vec w} -\sum_{i=1}^n \log(1+e^{-y_i \vec w^T \vec x})\\
+&amp;=\operatorname*{argmin}_{\vec w}\sum_{i=1}^n \log(1+e^{-y_i \vec w^T \vec x})
+\end{aligned}$$
+<p>We need to estimate the parameters <span class="math inline">\(\vec w\)</span>. To find the values of the parameters at minimum, we can try to find solutions for <span class="math inline">\(\nabla_{\vec w} \sum_{i=1}^n \log(1+e^{-y_i \vec w^T \vec x}) =0\)</span>. This equation has no closed form solution, so we will use <a href="lecturenote07.html">Gradient Descent</a> on the  <i>negative log likelihood</i> $\ell(\vec w)=\sum_{i=1}^n \log(1+e^{-y_i \vec w^T \vec x})$.</br> </p>
+
+
+
+<h3 id="map-estimate">Maximum a Posteriori (MAP) Estimate</h3>
+<p>
+In the MAP estimate we treat $\vec w$ as a random variable and can specify a prior belief distribution over it. We may use: <span class="math inline">\(\vec w \sim \mathbf{\mathcal{N}}(\vec 0,\sigma^2 I)\)</span>. This is the Gaussian approximation for LR.</p>
+<p>Our goal in MAP is to find the <i>most likely</i> model parameters  <i>given the data</i>, i.e., the parameters that <b>maximaize the posterior</b>.  
+<span class="math display">\[\begin{aligned}
+P(\vec w \mid D) = P(\vec w \mid X, \vec y) &amp;\propto P(\vec y \mid X, \vec w) \; P(\vec w)\\
+\hat{\vec{w}}_{MAP} = \operatorname*{argmax}_{\vec w} log \, \left(P(\vec y \mid X, \vec w) P(\vec w)\right) &amp;= \operatorname*{argmin}_{\vec w} \sum_{i=1}^n \log(1+e^{-y_i\vec w^T \vec x})+\lambda\vec w^\top\vec w,
+\end{aligned},
+\]</span></p>
+<p> where $\lambda = \frac{1}{2\sigma^2}$. 
+Once again, this function has no closed form solution, but we can use <a href="lecturenote07.html">Gradient Descent</a> on the <i>negative log posterior</i> $\ell(\vec w)=\sum_{i=1}^n \log(1+e^{-y_i\vec w^T \vec x})+\lambda\vec w^\top\vec w$ to find the optimal parameters $\vec w$. </p>
+
+<p>For a better understanding for the connection of Naive Bayes and Logistic Regression, you may take a peek at <a href="https://alliance.seas.upenn.edu/~cis520/wiki/index.php?n=Lectures.Logistic">these excellent notes</a>.</p>
+
+<!--<h3 id="map-estimate">"True" Bayesian LR</h3>
+<p>
+We have two options: </br>
+Instead of approximating $P(\vec y \mid X, \vec w)$ and $P(\vec w)$ we approximate $P(\vec w \mid X, \vec y)$ directly using a parametric distribution. The most common approach for this is Laplace approximation. 
+The second option is to derive an algorithm for sampling from the posterior and use this as an approximation. -->
+<!--These methods are introduced in <a href="http://www.cse.wustl.edu/~garnett/cse515t/">CSE515T</a> (Bayesian Methods in Machine Learning).-->
+ 
+</p>  
+</body>
+</html>
